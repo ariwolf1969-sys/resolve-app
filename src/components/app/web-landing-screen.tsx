@@ -6,7 +6,6 @@ import {
   MapPin,
   Camera,
   Scale,
-  Download,
   Star,
   ArrowRight,
   Store,
@@ -108,11 +107,31 @@ export function WebLandingScreen() {
         <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 sm:pb-24 sm:pt-28 lg:px-8 lg:pb-32 lg:pt-36">
           {/* Nav bar */}
           <nav className="mb-16 flex items-center justify-between sm:mb-20">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                <Zap className="h-5 w-5 text-white" />
+            <div className="flex items-center gap-4">
+              {/* Login / Register buttons */}
+              <div className="hidden items-center gap-3 sm:flex">
+                <button
+                  onClick={() => setView('onboarding')}
+                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                >
+                  Iniciar sesión
+                </button>
+                <button
+                  onClick={() => setView('onboarding')}
+                  className="px-4 py-2 bg-white/20 backdrop-blur-sm text-sm font-semibold text-white rounded-lg hover:bg-white/30 transition-colors"
+                >
+                  Creá tu cuenta
+                </button>
               </div>
-              <span className="text-xl font-bold text-white">Resolvé</span>
+              {/* Divider */}
+              <div className="hidden sm:block h-6 w-px bg-white/30" />
+              {/* Logo */}
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-white">Resolvé</span>
+              </div>
             </div>
             <div className="hidden items-center gap-6 sm:flex">
               <button onClick={() => setView('home')} className="text-sm font-medium text-white/90 hover:text-white transition-colors">
@@ -141,10 +160,10 @@ export function WebLandingScreen() {
               <Button
                 size="lg"
                 className="h-12 w-full bg-white px-8 text-base font-semibold text-blue-600 shadow-lg hover:bg-blue-50 sm:w-auto"
-                onClick={() => setView('home')}
+                onClick={() => setView('onboarding')}
               >
-                <Download className="mr-2 h-5 w-5" />
-                Descargar la App
+                Comenzar gratis
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
                 size="lg"

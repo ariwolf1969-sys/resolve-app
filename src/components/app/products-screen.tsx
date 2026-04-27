@@ -335,7 +335,7 @@ function ProductCard({
   const discount = getDiscountPercent(product.price, product.originalPrice);
   const sourceLabel = getSourceLabel(product.source);
   const sourceColor = getSourceBtnColor(product.source);
-  const hasImage = product.imageUrl && !product.imageUrl.includes('http2.mlstatic.com/D_NQ_NP');
+  const hasImage = !!product.imageUrl;
 
   return (
     <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col">

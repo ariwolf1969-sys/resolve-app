@@ -1,6 +1,7 @@
 'use client';
 
 import { useAppStore, type Quote } from '@/store/app-store';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
   FileText,
@@ -529,6 +530,119 @@ function DisputeSection({ quote }: { quote: Quote }) {
   );
 }
 
+// ====== Countdown Timer ======
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const calculateTimeLeft = useCallback(() => {
+    const now = new Date().getTime();
+    const target = new Date(targetDate).getTime();
+    const diff = target - now;
+
+    if (diff <= 0) {
+      return 'Vencido';
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    return `${minutes}m ${seconds}s`;
+  }, [targetDate]);
+
+  const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [calculateTimeLeft]);
+
+  const isExpired = timeLeft === 'Vencido';
+  const isUrgent = !isExpired && new Date(targetDate).getTime() - new Date().getTime() < 24 * 60 * 60 * 1000;
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${
+      isExpired ? 'bg-red-50 border border-red-200' : isUrgent ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-200'
+    }`}>
+      <Clock className={`h-4 w-4 ${isExpired ? 'text-red-500' : isUrgent ? 'text-amber-500' : 'text-gray-500'}`} />
+      <div>
+        <p className={`text-xs font-semibold ${isExpired ? 'text-red-700' : isUrgent ? 'text-amber-700' : 'text-foreground'}`}>
+          {isExpired ? '¡Presupuesto vencido!' : `Vence en: ${timeLeft}`}
+        </p>
+        {!isExpired && isUrgent && (
+          <p className="text-[10px] text-amber-600">Quedan menos de 24 horas</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ====== Deposit Section ======
+function DepositSection({ quote }: { quote: Quote }) {
+  const [depositPaid, setDepositPaid] = useState(!!(quote as any).depositPaid);
+  const depositAmount = (quote as any).depositAmount || quote.amount * 0.2;
+  const validUntil = (quote as any).validUntil || quote.expiresAt;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+        <DollarSign className="h-4 w-4 text-emerald-500" />
+        Seña y Reserva
+      </h3>
+
+      {!depositPaid ? (
+        <>
+          <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-emerald-600 font-medium uppercase tracking-wide">Seña del 20%</p>
+              <span className="text-lg font-bold text-emerald-700">{formatARS(depositAmount)}</span>
+            </div>
+            <p className="text-xs text-emerald-600/70">
+              Reservá tu presupuesto pagando el 20% como seña. El monto se descuenta del total.
+            </p>
+          </div>
+
+          {validUntil && <CountdownTimer targetDate={validUntil} />}
+
+          <button
+            onClick={() => setDepositPaid(true)}
+            className="w-full bg-emerald-500 text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+              <line x1="1" x2="23" y1="10" y2="10" />
+            </svg>
+            Pagar seña del 20% ({formatARS(depositAmount)})
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-700">Seña pagada</p>
+                <p className="text-xs text-emerald-600">{formatARS(depositAmount)} reservados · Se descuentan del total</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-sm bg-gray-50 rounded-xl p-3">
+            <span className="text-muted-foreground">Saldo pendiente</span>
+            <span className="font-bold text-foreground">{formatARS(quote.amount - depositAmount)}</span>
+          </div>
+          {validUntil && <CountdownTimer targetDate={validUntil} />}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ====== Main Component ======
 export function QuoteDetailScreen() {
   const { goBack, setView, selectedQuote } = useAppStore();
@@ -735,6 +849,11 @@ export function QuoteDetailScreen() {
         {/* ====== Transaction Section ====== */}
         {quote.transactions && quote.transactions.length > 0 && (
           <TransactionSection quote={quote} />
+        )}
+
+        {/* ====== Deposit Section (for accepted quotes) ====== */}
+        {quote.status === 'accepted' && isClient && (
+          <DepositSection quote={quote} />
         )}
 
         {/* ====== Check-in Section ====== */}

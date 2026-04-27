@@ -266,6 +266,21 @@ export function ChatScreen() {
       </div>
 
       <div className="sticky bottom-0 bg-background border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {/* Quick action: Solicitar presupuesto */}
+        <div className="mb-2">
+          <button
+            onClick={() => setView('create-quote')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+              <path d="M14 2v6h6" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
+            </svg>
+            Solicitar presupuesto
+          </button>
+        </div>
         <div className="flex items-end gap-2">
           <div className="flex-1 relative">
             <textarea

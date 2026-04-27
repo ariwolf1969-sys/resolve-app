@@ -25,7 +25,7 @@ const VALIDITY_OPTIONS = [
 
 // ====== Main Component ======
 export function CreateQuoteScreen() {
-  const { goBack, setView } = useAppStore();
+  const { goBack, setView, selectedUserProfile, currentUser } = useAppStore();
 
   // Form state
   const [title, setTitle] = useState('');
@@ -33,12 +33,16 @@ export function CreateQuoteScreen() {
   const [amount, setAmount] = useState('');
   const [includesMaterials, setIncludesMaterials] = useState(false);
   const [estimatedHours, setEstimatedHours] = useState('');
-  const [validity, setValidity] = useState('48');
+  const [validity, setValidity] = useState('168');
   const [clientMessage, setClientMessage] = useState('');
   const [clientId, setClientId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showValidityDropdown, setShowValidityDropdown] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Pre-fill professional info if coming from pro-profile
+  const professionalName = selectedUserProfile?.name || '';
+  const professionalId = selectedUserProfile?.id || '';
 
   // Validation
   const validateForm = (): boolean => {
@@ -65,6 +69,9 @@ export function CreateQuoteScreen() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  // Determine if this is a client request (from pro-profile) or professional quote
+  const isClientRequest = !!professionalName && !currentUser?.profession;
 
   // Submit
   const handleSubmit = async () => {
@@ -102,14 +109,39 @@ export function CreateQuoteScreen() {
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Nuevo Presupuesto</h1>
-            <p className="text-xs text-muted-foreground">Completá los datos del servicio</p>
+            <h1 className="text-lg font-semibold text-foreground">
+              {isClientRequest ? 'Solicitar Presupuesto' : 'Nuevo Presupuesto'}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {isClientRequest ? 'Contale al profesional lo que necesitás' : 'Completá los datos del servicio'}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Form */}
       <div className="p-4 space-y-5 pb-8">
+        {/* Pre-filled professional info (for client requests) */}
+        {professionalName && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center">
+                <span className="text-lg font-bold text-white">{professionalName.charAt(0)}</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-blue-900">Solicitando presupuesto a</h3>
+                <p className="text-base font-bold text-blue-700">{professionalName}</p>
+                {selectedUserProfile?.profession && (
+                  <p className="text-xs text-blue-600">{selectedUserProfile.profession}</p>
+                )}
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M9 12l2 2 4-4" /><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              </svg>
+            </div>
+          </div>
+        )}
+
         {/* Service Title */}
         <div>
           <label className="text-sm font-semibold mb-1.5 flex items-center gap-1.5 text-foreground">
@@ -335,14 +367,16 @@ export function CreateQuoteScreen() {
           </div>
         </div>
 
-        {/* Client Message */}
+        {/* Client Message / Additional notes */}
         <div>
           <label className="text-sm font-semibold mb-1.5 flex items-center gap-1.5 text-foreground">
             <MessageSquare className="h-4 w-4 text-blue-500" />
-            Mensaje para el cliente
+            {isClientRequest ? 'Describí tu problema o necesidad' : 'Mensaje para el cliente'}
           </label>
           <textarea
-            placeholder="Dejale un mensaje personalizado al cliente sobre el presupuesto..."
+            placeholder={isClientRequest
+              ? 'Contale al profesional qué necesitás, dónde estás, y cuándo te vendría bien...'
+              : 'Dejale un mensaje personalizado al cliente sobre el presupuesto...'}
             value={clientMessage}
             onChange={(e) => setClientMessage(e.target.value)}
             maxLength={300}
@@ -440,13 +474,15 @@ export function CreateQuoteScreen() {
           ) : (
             <>
               <Send className="h-4 w-4" />
-              Enviar presupuesto
+              {isClientRequest ? 'Enviar solicitud' : 'Enviar presupuesto'}
             </>
           )}
         </button>
 
         <p className="text-center text-[10px] text-muted-foreground">
-          Al enviar el presupuesto, el cliente recibirá una notificación y tendrá el plazo de validez para aceptarlo o rechazarlo.
+          {isClientRequest
+            ? 'Al enviar la solicitud, el profesional recibirá una notificación y podrá responder con un presupuesto detallado.'
+            : 'Al enviar el presupuesto, el cliente recibirá una notificación y tendrá el plazo de validez para aceptarlo o rechazarlo.'}
         </p>
       </div>
     </div>

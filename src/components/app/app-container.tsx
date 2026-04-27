@@ -21,6 +21,7 @@ import { PaymentsScreen } from '@/components/app/payments-screen';
 import { CheckInScreen } from '@/components/app/check-in-screen';
 import { DisputeScreen } from '@/components/app/dispute-screen';
 import { AnimatePresence, motion } from 'framer-motion';
+import { buildAffiliateUrl } from '@/lib/affiliate';
 
 const pageVariants = {
   initial: { opacity: 0, x: 20 },
@@ -248,7 +249,7 @@ function ProductDetailScreen() {
         {/* CTA Buttons */}
         <div className="space-y-3 pt-2">
           <a
-            href={selectedProduct.sourceUrl}
+            href={buildAffiliateUrl(selectedProduct.sourceUrl, selectedProduct.source)}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full bg-blue-500 text-white py-3.5 rounded-xl font-semibold text-center flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"

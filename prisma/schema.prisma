@@ -194,6 +194,9 @@ model Quote {
   estimatedHours  Float?
   providerMessage String?
   clientMessage   String?
+  depositPaid     Boolean   @default(false)
+  depositAmount   Float?
+  validUntil      DateTime?
   acceptedAt      DateTime?
   rejectedAt      DateTime?
   completedAt     DateTime?
