@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '@/store/app-store';
+import { getProvinceName } from '@/lib/argentina-locations';
 import { formatBudget, getCategoryName, getCategoryColor, timeAgo } from './home-screen';
 
 export function ProfileScreen() {
@@ -36,6 +37,18 @@ export function ProfileScreen() {
     );
   }
 
+  // Build location display
+  const locationDisplay = (() => {
+    if (currentUser.city && currentUser.province) {
+      const provName = getProvinceName(currentUser.province);
+      return `${currentUser.city}, ${provName}`;
+    }
+    if (currentUser.city) return currentUser.city;
+    if (currentUser.province) return getProvinceName(currentUser.province);
+    if (currentUser.neighborhood) return currentUser.neighborhood;
+    return 'Argentina';
+  })();
+
   return (
     <div className="min-h-full bg-background">
       {/* Profile Header */}
@@ -44,7 +57,7 @@ export function ProfileScreen() {
           <div>
             <h1 className="text-xl font-bold text-white">Mi perfil</h1>
             <p className="text-blue-100 text-xs mt-0.5">
-              {currentUser.profession ? 'Panel de profesional' : 'Gestion&aacute; tu cuenta'}
+              {currentUser.profession ? 'Panel de profesional' : 'Gestioná tu cuenta'}
             </p>
           </div>
           <button
@@ -56,16 +69,30 @@ export function ProfileScreen() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center relative">
-            <span className="text-2xl font-bold text-white">{currentUser.name.charAt(0)}</span>
-            {currentUser.dniVerified && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            )}
-          </div>
+          {/* Avatar */}
+          {currentUser.avatar ? (
+            <div className="w-16 h-16 rounded-2xl overflow-hidden relative shadow-lg">
+              <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+              {currentUser.dniVerified && (
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center relative">
+              <span className="text-2xl font-bold text-white">{currentUser.name.charAt(0)}</span>
+              {currentUser.dniVerified && (
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-white">{currentUser.name}</h2>
@@ -75,65 +102,63 @@ export function ProfileScreen() {
                 </svg>
               )}
             </div>
-            <p className="text-blue-100 text-sm">{currentUser.location || currentUser.neighborhood || 'Buenos Aires'}</p>
+            <p className="text-blue-100 text-sm">{locationDisplay}</p>
           </div>
         </div>
       </div>
 
-      {/* Stats with Hourly Rate */}
+      {/* Stats - properly spaced */}
       <div className="px-5 -mt-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="grid grid-cols-4 gap-2">
-            <div className="text-center">
+          <div className="grid grid-cols-4 divide-x divide-gray-100">
+            <div className="text-center px-1">
               <p className="text-xl font-bold text-blue-500">{currentUser.completedJobs}</p>
-              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">Trabajos</p>
+              <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Trabajos</p>
             </div>
-            <div className="text-center border-l border-gray-100">
-              <div className="flex items-center justify-center gap-1">
+            <div className="text-center px-1">
+              <div className="flex items-center justify-center gap-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
                   <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                 </svg>
                 <p className="text-xl font-bold">{currentUser.ratingAvg}</p>
               </div>
-              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">Puntaje</p>
+              <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Puntaje</p>
             </div>
-            <div className="text-center border-l border-gray-100">
+            <div className="text-center px-1">
               <p className="text-xl font-bold">{currentUser.ratingCount}</p>
-              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">Rese&ntilde;as</p>
+              <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Reseñas</p>
             </div>
-            <div className="text-center border-l border-gray-100">
+            <div className="text-center px-1">
               <p className="text-base font-bold text-green-600">
                 {currentUser.hourlyRate ? formatBudget(currentUser.hourlyRate) : '-'}
               </p>
-              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">Precio/hs</p>
+              <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Precio/hs</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bio or Professional info */}
-      {(currentUser.bio || currentUser.profession) && (
+      {/* Professional info - only show if user is a professional */}
+      {currentUser.profession && (
         <div className="px-5 mt-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
-            {currentUser.profession && (
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-600 text-xs font-semibold">{currentUser.profession}</span>
-                {currentUser.dniVerified && (
-                  <span className="px-2 py-0.5 rounded-lg bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25z" clipRule="evenodd" /></svg>
-                    DNI verificado
-                  </span>
-                )}
-                {currentUser.hourlyRate && (
-                  <span className="px-2 py-0.5 rounded-lg bg-green-100 text-green-600 text-[10px] font-bold">
-                    {formatBudget(currentUser.hourlyRate)}/hs
-                  </span>
-                )}
-              </div>
-            )}
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-600 text-xs font-semibold">{currentUser.profession}</span>
+              {currentUser.dniVerified && (
+                <span className="px-2 py-0.5 rounded-lg bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25z" clipRule="evenodd" /></svg>
+                  DNI verificado
+                </span>
+              )}
+              {currentUser.hourlyRate && (
+                <span className="px-2 py-0.5 rounded-lg bg-green-100 text-green-600 text-[10px] font-bold">
+                  {formatBudget(currentUser.hourlyRate)}/hs
+                </span>
+              )}
+            </div>
             {currentUser.bio && (
               <>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Sobre m&iacute;</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Sobre mí</h3>
                 <p className="text-sm leading-relaxed">{currentUser.bio}</p>
               </>
             )}
@@ -148,7 +173,7 @@ export function ProfileScreen() {
         </div>
       )}
 
-      {/* Register as Professional */}
+      {/* Register as Professional - only for clients */}
       {!currentUser.profession && (
         <div className="px-5 mt-4">
           <button
@@ -162,7 +187,7 @@ export function ProfileScreen() {
             </div>
             <div className="text-left">
               <p className="text-sm font-semibold">Registrarme como profesional</p>
-              <p className="text-[10px] text-blue-200">Aparec&eacute; en el buscador, pon&eacute; tu precio por hora y consegu&iacute; m&aacute;s trabajo</p>
+              <p className="text-[10px] text-blue-200">Aparecé en el buscador, poné tu precio por hora y conseguí más trabajo</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path d="m9 18 6-6-6-6" />
@@ -171,7 +196,7 @@ export function ProfileScreen() {
         </div>
       )}
 
-      {/* Edit Hourly Rate (if already registered) */}
+      {/* Edit Professional Profile (if already registered) */}
       {currentUser.profession && (
         <div className="px-5 mt-4">
           <button
@@ -188,7 +213,7 @@ export function ProfileScreen() {
               <p className="text-[10px] text-green-200">
                 {currentUser.hourlyRate
                   ? `Precio actual: ${formatBudget(currentUser.hourlyRate)}/hs`
-                  : 'Configur&aacute; tu precio por hora'
+                  : 'Configurá tu precio por hora'
                 }
               </p>
             </div>
@@ -211,12 +236,12 @@ export function ProfileScreen() {
           </div>
         ) : needs.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-            <p className="text-sm text-muted-foreground">A&uacute;n no publicaste nada</p>
+            <p className="text-sm text-muted-foreground">Aún no publicaste nada</p>
             <button
               onClick={() => setView('create-need')}
               className="mt-3 text-blue-500 text-sm font-medium hover:underline"
             >
-              Crear primera publicaci&oacute;n
+              Crear primera publicación
             </button>
           </div>
         ) : (
@@ -300,7 +325,7 @@ export function ProfileScreen() {
             </div>
             <div>
               <p className="text-sm font-medium">Seguridad</p>
-              <p className="text-[10px] text-muted-foreground">Verificaci&oacute;n y configuraci&oacute;n</p>
+              <p className="text-[10px] text-muted-foreground">Verificación y configuración</p>
             </div>
           </button>
           <button className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 hover:shadow-sm transition-all text-left">

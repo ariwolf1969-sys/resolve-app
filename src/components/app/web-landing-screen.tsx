@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { PROFESSIONS } from '@/components/app/home-screen';
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // ── Inline demo product data ──────────────────────────────────────
 const DEMO_PRODUCTS = [
@@ -37,39 +37,99 @@ const DEMO_PRODUCTS = [
     price: 89900,
     originalPrice: 129900,
     source: 'MercadoLibre',
-    image: 'https://placehold.co/400x300/3b82f6/ffffff?text=Taladro+20V',
+    image: 'https://placehold.co/300x225/3b82f6/ffffff?text=Taladro+20V',
     rating: 4.7,
     reviews: 342,
   },
   {
     id: 'p2',
-    title: 'Kit de herramientas profesionales 150 piezas',
+    title: 'Kit de herramientas 150 piezas',
     price: 45900,
     originalPrice: 59900,
     source: 'Amazon',
-    image: 'https://placehold.co/400x300/2563eb/ffffff?text=Kit+Herramientas',
+    image: 'https://placehold.co/300x225/2563eb/ffffff?text=Kit+Herram.',
     rating: 4.5,
     reviews: 189,
   },
   {
     id: 'p3',
-    title: 'Cámara de seguridad WiFi 1080p',
+    title: 'Cámara WiFi 1080p',
     price: 25900,
     originalPrice: 38900,
     source: 'AliExpress',
-    image: 'https://placehold.co/400x300/f59e0b/ffffff?text=C%C3%A1mara+WiFi',
+    image: 'https://placehold.co/300x225/f59e0b/ffffff?text=C%C3%A1m+WiFi',
     rating: 4.3,
     reviews: 567,
   },
   {
     id: 'p4',
-    title: 'Lámpara LED de escritorio regulable',
+    title: 'Lámpara LED regulable',
     price: 15900,
     originalPrice: 21900,
     source: 'Temu',
-    image: 'https://placehold.co/400x300/d97706/ffffff?text=L%C3%A1mpara+LED',
+    image: 'https://placehold.co/300x225/d97706/ffffff?text=L%C3%A1mp+LED',
     rating: 4.6,
     reviews: 213,
+  },
+  {
+    id: 'p5',
+    title: 'Destornillador inalámbrico',
+    price: 32900,
+    originalPrice: 45000,
+    source: 'Amazon',
+    image: 'https://placehold.co/300x225/059669/ffffff?text=Destorn.',
+    rating: 4.8,
+    reviews: 421,
+  },
+  {
+    id: 'p6',
+    title: 'Máscara de soldar auto',
+    price: 48900,
+    originalPrice: 65000,
+    source: 'MercadoLibre',
+    image: 'https://placehold.co/300x225/7c3aed/ffffff?text=M%C3%A1sc+Soldar',
+    rating: 4.4,
+    reviews: 98,
+  },
+  {
+    id: 'p7',
+    title: 'Set de brocas titanio',
+    price: 18900,
+    originalPrice: 28000,
+    source: 'AliExpress',
+    image: 'https://placehold.co/300x225/dc2626/ffffff?text=Brocas+Ti',
+    rating: 4.2,
+    reviews: 156,
+  },
+  {
+    id: 'p8',
+    title: 'Flexómetro 5 metros',
+    price: 8500,
+    originalPrice: 12000,
+    source: 'MercadoLibre',
+    image: 'https://placehold.co/300x225/0d9488/ffffff?text=Flex+5m',
+    rating: 4.9,
+    reviews: 723,
+  },
+  {
+    id: 'p9',
+    title: 'Nivel láser digital',
+    price: 68900,
+    originalPrice: 89000,
+    source: 'Amazon',
+    image: 'https://placehold.co/300x225/4338ca/ffffff?text=Nivel+Laser',
+    rating: 4.5,
+    reviews: 87,
+  },
+  {
+    id: 'p10',
+    title: 'Guantes de cuero XL',
+    price: 12500,
+    originalPrice: 18000,
+    source: 'Temu',
+    image: 'https://placehold.co/300x225/92400e/ffffff?text=Guantes+XL',
+    rating: 4.1,
+    reviews: 334,
   },
 ];
 
@@ -93,6 +153,56 @@ function formatPrice(price: number) {
 
 function getSourceBadgeColor(source: string) {
   return SOURCE_BADGES.find((b) => b.name === source)?.color ?? 'bg-gray-100 text-gray-700 border-gray-200';
+}
+
+// ── Product Card Component for Carousel ──────────────────────────
+function ProductCard({ product, setView }: { product: typeof DEMO_PRODUCTS[0]; setView: (v: any) => void }) {
+  return (
+    <div className="shrink-0 w-[200px] sm:w-[220px] lg:w-[240px] group">
+      <Card className="overflow-hidden rounded-xl border border-gray-200/80 p-0 transition-all hover:shadow-lg">
+        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+          <img
+            src={product.image}
+            alt={product.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <Badge
+            variant="outline"
+            className={`absolute left-2 top-2 text-[9px] font-medium ${getSourceBadgeColor(product.source)} border`}
+          >
+            {product.source}
+          </Badge>
+          {product.originalPrice && (
+            <Badge className="absolute right-2 top-2 bg-red-500 text-white text-[9px]">
+              -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+            </Badge>
+          )}
+        </div>
+        <CardContent className="p-3">
+          <h3 className="text-xs font-semibold leading-snug text-gray-900 line-clamp-2 min-h-[2rem]">
+            {product.title}
+          </h3>
+          <div className="mt-1.5 flex items-center gap-1">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            <span className="text-[10px] font-medium text-gray-700">{product.rating}</span>
+            <span className="text-[10px] text-gray-400">({product.reviews})</span>
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="text-sm font-bold text-blue-600">{formatPrice(product.price)}</span>
+            {product.originalPrice && (
+              <span className="text-[10px] text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
+            )}
+          </div>
+          <Button
+            className="mt-2 h-7 w-full bg-blue-500 text-[10px] font-semibold text-white hover:bg-blue-600 px-0"
+            onClick={() => setView('products')}
+          >
+            Ver oferta
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 // ── Main Component ────────────────────────────────────────────────
@@ -120,21 +230,8 @@ export function WebLandingScreen() {
                 <span className="text-xl font-bold text-white">Resolvé</span>
               </div>
 
-              {/* Desktop nav links - hidden on mobile */}
-              <div className="hidden sm:flex items-center gap-6">
-                <button onClick={() => setView('home')} className="text-sm font-medium text-white/90 hover:text-white transition-colors">
-                  Inicio
-                </button>
-                <button onClick={() => setView('products')} className="text-sm font-medium text-white/90 hover:text-white transition-colors">
-                  Productos
-                </button>
-                <button className="text-sm font-medium text-white/90 hover:text-white transition-colors">
-                  Seguridad
-                </button>
-              </div>
-
               {/* Desktop auth buttons - hidden on mobile */}
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-3 ml-auto">
                 <button
                   onClick={() => setView('onboarding')}
                   className="px-4 py-2 text-sm font-medium text-white/90 hover:text-white transition-colors"
@@ -354,12 +451,12 @@ export function WebLandingScreen() {
           {/* 5 trust pillars - responsive grid */}
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 sm:mt-12 sm:gap-6">
             {/* Pillar 1: Pagos 100% seguros */}
-            <div className="group rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 sm:p-6 text-center shadow-sm transition-all hover:shadow-lg sm:text-left">
-              <div className="mx-auto flex h-12 w-12 sm:mx-0 items-center justify-center rounded-xl bg-white/20 transition-colors group-hover:bg-white/30">
-                <Shield className="h-6 w-6 text-white" />
+            <div className="group rounded-2xl bg-white p-5 sm:p-6 text-center shadow-sm ring-1 ring-gray-200/60 transition-all hover:shadow-md sm:text-left">
+              <div className="mx-auto flex h-12 w-12 sm:mx-0 items-center justify-center rounded-xl bg-blue-50 transition-colors group-hover:bg-blue-500">
+                <Shield className="h-6 w-6 text-blue-500 transition-colors group-hover:text-white" />
               </div>
-              <h3 className="mt-4 text-sm font-bold text-white sm:text-base">Pagos 100% seguros</h3>
-              <p className="mt-2 text-xs leading-relaxed text-blue-100 sm:text-sm">
+              <h3 className="mt-4 text-sm font-bold text-gray-900 sm:text-base">Pagos 100% seguros</h3>
+              <p className="mt-2 text-xs leading-relaxed text-gray-500 sm:text-sm">
                 Dinero protegido hasta que confirmes que todo está bien
               </p>
             </div>
@@ -411,7 +508,7 @@ export function WebLandingScreen() {
         </div>
       </section>
 
-      {/* ──────────────── 5. PRODUCTS SECTION ──────────────── */}
+      {/* ──────────────── 5. PRODUCTS CAROUSEL ──────────────── */}
       <section className="bg-gray-50 py-14 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -419,7 +516,7 @@ export function WebLandingScreen() {
               Productos recomendados
             </h2>
             <p className="mt-3 text-base text-gray-500 sm:text-lg">
-              Los mejores productos de las principales tiendas online con los mejores precios
+              Los mejores productos de las principales tiendas online
             </p>
           </div>
 
@@ -436,65 +533,22 @@ export function WebLandingScreen() {
             ))}
           </div>
 
-          {/* Product grid */}
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {DEMO_PRODUCTS.map((product) => (
-              <Card
-                key={product.id}
-                className="group overflow-hidden rounded-2xl border border-gray-200/80 p-0 transition-all hover:shadow-lg hover:-translate-y-1"
-              >
-                {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <Badge
-                    variant="outline"
-                    className={`absolute left-3 top-3 text-[10px] font-medium ${getSourceBadgeColor(product.source)} border`}
-                  >
-                    {product.source}
-                  </Badge>
-                  {product.originalPrice && (
-                    <Badge className="absolute right-3 top-3 bg-red-500 text-white text-[10px]">
-                      {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
-                    </Badge>
-                  )}
-                </div>
+          {/* Auto-scrolling carousel - Row 1 */}
+          <div className="mt-8 overflow-hidden">
+            <div className="flex gap-4 animate-scroll">
+              {[...DEMO_PRODUCTS, ...DEMO_PRODUCTS].map((product, i) => (
+                <ProductCard key={`${product.id}-${i}`} product={product} setView={setView} />
+              ))}
+            </div>
+          </div>
 
-                <CardContent className="p-4">
-                  <h3 className="text-sm font-semibold leading-snug text-gray-900 line-clamp-2 min-h-[2.5rem]">
-                    {product.title}
-                  </h3>
-
-                  {/* Rating */}
-                  <div className="mt-2 flex items-center gap-1">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span className="text-xs font-medium text-gray-700">{product.rating}</span>
-                    <span className="text-xs text-gray-400">({product.reviews})</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="mt-3 flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-blue-600">{formatPrice(product.price)}</span>
-                    {product.originalPrice && (
-                      <span className="text-xs text-gray-400 line-through">
-                        {formatPrice(product.originalPrice)}
-                      </span>
-                    )}
-                  </div>
-
-                  <Button
-                    className="mt-4 h-9 w-full bg-blue-500 text-xs font-semibold text-white hover:bg-blue-600"
-                    onClick={() => setView('products')}
-                  >
-                    Ver oferta
-                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Row 2 - scrolls opposite direction */}
+          <div className="mt-4 overflow-hidden">
+            <div className="flex gap-4 animate-scroll-reverse">
+              {[...DEMO_PRODUCTS.slice().reverse(), ...DEMO_PRODUCTS.slice().reverse()].map((product, i) => (
+                <ProductCard key={`${product.id}-r-${i}`} product={product} setView={setView} />
+              ))}
+            </div>
           </div>
 
           {/* CTA */}

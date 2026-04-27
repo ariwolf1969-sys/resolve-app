@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useAppStore } from '@/store/app-store';
-import { ARGENTINA_PROVINCES, getCitiesByProvince } from '@/lib/argentina-locations';
+import { ARGENTINA_PROVINCES, getCitiesByProvince, isCaba } from '@/lib/argentina-locations';
 
 export function SplashScreen() {
   const { setView } = useAppStore();
@@ -62,17 +62,20 @@ export function OnboardingScreen() {
     return getCitiesByProvince(province);
   }, [province]);
 
-  // Neighborhoods derived from the selected city's work zones or cities list
+  // For CABA, city IS the barrio - no separate neighborhood field needed
+  const showNeighborhoodField = useMemo(() => {
+    return !isCaba(province);
+  }, [province]);
+
+  // Neighborhoods only for non-CABA provinces
   const neighborhoods = useMemo(() => {
-    if (!city || !province) return [];
-    // Use workZones if available, otherwise the city itself as the zone
+    if (!city || !province || isCaba(province)) return [];
     const prov = ARGENTINA_PROVINCES.find(p => p.id === province);
     if (!prov) return [];
     if (prov.workZones && prov.workZones.length > 0) {
-      return [...prov.workZones];
+      return [...prov.workZones].sort((a, b) => a.localeCompare(b, 'es'));
     }
-    // Fallback: use all cities as potential neighborhoods within the province
-    return prov.cities;
+    return [];
   }, [city, province]);
 
   const filteredNeighborhoods = useMemo(() => {
@@ -118,7 +121,7 @@ export function OnboardingScreen() {
       return;
     }
     if (!city) {
-      setError('Seleccioná una ciudad');
+      setError(isCaba(province) ? 'Seleccioná un barrio' : 'Seleccioná una ciudad');
       return;
     }
     setIsSubmitting(true);
@@ -421,7 +424,7 @@ export function OnboardingScreen() {
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Ciudad *</label>
+            <label className="text-sm font-medium mb-1.5 block">{isCaba(province) ? 'Barrio *' : 'Ciudad *'}</label>
             <select
               value={city}
               onChange={(e) => {
@@ -432,13 +435,13 @@ export function OnboardingScreen() {
               className={selectClass}
               disabled={!province}
             >
-              <option value="">{province ? 'Seleccioná una ciudad' : 'Primero elegí una provincia'}</option>
+              <option value="">{province ? (isCaba(province) ? 'Seleccioná tu barrio' : 'Seleccioná una ciudad') : 'Primero elegí una provincia'}</option>
               {cities.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
-          {city && (
+          {showNeighborhoodField && city && (
             <div ref={neighborhoodRef} className="relative">
               <label className="text-sm font-medium mb-1.5 block">Barrio</label>
               <input

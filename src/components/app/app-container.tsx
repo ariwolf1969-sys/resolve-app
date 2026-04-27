@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useAppStore } from '@/store/app-store';
 import { SplashScreen, OnboardingScreen } from '@/components/app/splash-screen';
 import { HomeScreen } from '@/components/app/home-screen';
@@ -90,7 +91,57 @@ export default function AppContainer() {
 }
 
 function EditProfileScreen() {
-  const { setView, currentUser } = useAppStore();
+  const { setView, currentUser, setCurrentUser } = useAppStore();
+  const [name, setName] = useState(currentUser?.name || '');
+  const [neighborhood, setNeighborhood] = useState(currentUser?.neighborhood || currentUser?.city || '');
+  const [bio, setBio] = useState(currentUser?.bio || '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/users/${currentUser?.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, neighborhood, bio }),
+      });
+      if (res.ok) {
+        setCurrentUser({ ...currentUser!, name, neighborhood, bio });
+        setSaved(true);
+        setTimeout(() => setView('profile'), 800);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setSaving(false);
+  };
+
+  const handlePhotoClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('avatar', file);
+      try {
+        const res = await fetch(`/api/users/${currentUser?.id}/avatar`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser({ ...currentUser!, avatar: data.avatarUrl });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="min-h-full p-4">
       <div className="flex items-center gap-3 mb-6">
@@ -101,25 +152,58 @@ function EditProfileScreen() {
         </button>
         <h1 className="text-lg font-semibold">Editar perfil</h1>
       </div>
+
+      {/* Avatar upload */}
+      <div className="flex items-center gap-4 mb-6">
+        {currentUser?.avatar ? (
+          <div className="w-20 h-20 rounded-2xl overflow-hidden relative">
+            <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center">
+            <span className="text-3xl font-bold text-blue-500">{currentUser?.name?.charAt(0)}</span>
+          </div>
+        )}
+        <button
+          onClick={handlePhotoClick}
+          className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+        >
+          Cambiar foto
+        </button>
+      </div>
+
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-1 block">Nombre</label>
-          <input type="text" defaultValue={currentUser?.name || ''} className="w-full p-3 rounded-lg border bg-background text-sm" id="edit-name" />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-3 rounded-lg border bg-background text-sm" />
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-1 block">Teléfono</label>
-          <input type="tel" defaultValue={currentUser?.phone || ''} className="w-full p-3 rounded-lg border bg-background text-sm" disabled />
+          <input type="tel" value={currentUser?.phone || ''} className="w-full p-3 rounded-lg border bg-background text-sm text-muted-foreground" disabled />
+          <p className="text-[10px] text-muted-foreground mt-1">El teléfono no se puede cambiar desde aquí</p>
         </div>
         <div>
-          <label className="text-sm font-medium text-muted-foreground mb-1 block">Barrio</label>
-          <input type="text" defaultValue={currentUser?.neighborhood || ''} className="w-full p-3 rounded-lg border bg-background text-sm" id="edit-neighborhood" />
+          <label className="text-sm font-medium text-muted-foreground mb-1 block">Barrio / Ciudad</label>
+          <input type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} className="w-full p-3 rounded-lg border bg-background text-sm" placeholder="Ej: Palermo" />
         </div>
-        <div>
-          <label className="text-sm font-medium text-muted-foreground mb-1 block">Sobre mí</label>
-          <textarea defaultValue={currentUser?.bio || ''} className="w-full p-3 rounded-lg border bg-background text-sm min-h-[100px]" rows={3} id="edit-bio" />
-        </div>
+        {currentUser?.profession && (
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1 block">Sobre mí</label>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)} className="w-full p-3 rounded-lg border bg-background text-sm min-h-[100px]" rows={3} placeholder="Contá sobre tu experiencia..." />
+          </div>
+        )}
       </div>
-      <button onClick={() => setView('profile')} className="w-full mt-6 bg-blue-500 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-600 transition-colors">Guardar cambios</button>
+
+      {saved && (
+        <p className="text-green-600 text-sm text-center mt-4 font-medium">Cambios guardados correctamente</p>
+      )}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full mt-6 bg-blue-500 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-600 disabled:opacity-50 transition-colors"
+      >
+        {saving ? 'Guardando...' : 'Guardar cambios'}
+      </button>
     </div>
   );
 }

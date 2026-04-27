@@ -154,7 +154,8 @@ export const ARGENTINA_PROVINCES: Province[] = [
 
 export function getCitiesByProvince(provinceId: string): string[] {
   const province = ARGENTINA_PROVINCES.find(p => p.id === provinceId);
-  return province ? province.cities : [];
+  if (!province) return [];
+  return [...province.cities].sort((a, b) => a.localeCompare(b, 'es'));
 }
 
 export function getWorkZonesByProvince(provinceId: string): string[] {
@@ -172,4 +173,8 @@ export function searchCities(provinceId: string, query: string): string[] {
   if (!query) return cities;
   const q = query.toLowerCase();
   return cities.filter(c => c.toLowerCase().includes(q));
+}
+
+export function isCaba(provinceId: string): boolean {
+  return provinceId === 'caba';
 }
