@@ -112,14 +112,14 @@ export async function GET(request: NextRequest) {
           const distance = haversineDistance(lat, lng, pro.lat, pro.lng);
           return { ...pro, distanceKm: Math.round(distance * 10) / 10 };
         }
-        return pro;
+        return { ...pro, distanceKm: null as number | null };
       });
     }
 
     // Sort by distance if coordinates provided
     if (lat !== null && lng !== null) {
-      professionals.sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999));
-      professionals = professionals.filter(pro => (pro.distanceKm || 999) <= maxDistance);
+      professionals.sort((a, b) => ((a as any).distanceKm || 999) - ((b as any).distanceKm || 999));
+      professionals = professionals.filter(pro => ((pro as any).distanceKm || 999) <= maxDistance);
     }
 
     return NextResponse.json(professionals);

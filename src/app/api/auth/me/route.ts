@@ -30,18 +30,20 @@ export async function GET(req: NextRequest) {
           role: true,
           profession: true,
           bio: true,
+          neighborhood: true,
           city: true,
           province: true,
-          address: true,
+          location: true,
           hourlyRate: true,
-          rating: true,
-          reviewCount: true,
-          isAvailable: true,
-          isVerified: true,
+          verified: true,
+          dniVerified: true,
           skills: true,
           experience: true,
-          education: true,
-          certifications: true,
+          ratingAvg: true,
+          ratingCount: true,
+          completedJobs: true,
+          balance: true,
+          createdAt: true,
         },
       })
 
@@ -52,7 +54,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         ...user,
         skills: user.skills ? JSON.parse(user.skills) : null,
-        certifications: user.certifications ? JSON.parse(user.certifications) : null,
       })
     } catch {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 })

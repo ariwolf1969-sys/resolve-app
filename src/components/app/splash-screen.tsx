@@ -42,6 +42,7 @@ export function OnboardingScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
+  const [role, setRole] = useState<'client' | 'provider'>('client');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -73,6 +74,7 @@ export function OnboardingScreen() {
           email: email.trim(),
           password: password,
           phone: phone.trim(),
+          role: role,
           neighborhood: neighborhood.trim() || undefined,
         }),
       });
@@ -80,7 +82,11 @@ export function OnboardingScreen() {
       if (res.ok) {
         const user = await res.json();
         setCurrentUser(user);
-        setView('home'); // After onboarding, go to app home
+        if (role === 'provider') {
+          setView('register-pro');
+        } else {
+          setView('home');
+        }
       } else {
         const data = await res.json();
         setError(data.error || 'Error al crear cuenta');
@@ -127,7 +133,75 @@ export function OnboardingScreen() {
       {/* Form */}
       <div className="flex-1 px-6 pt-8">
         <h2 className="text-xl font-bold mb-1">Creá tu perfil</h2>
-        <p className="text-muted-foreground text-sm mb-6">Solo toma 30 segundos</p>
+        <p className="text-muted-foreground text-sm mb-4">Solo toma 30 segundos</p>
+
+        {/* Account type selector */}
+        <div className="mb-6">
+          <label className="text-sm font-medium mb-2.5 block">¿Cómo querés usar Resolvé?</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setRole('client')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                role === 'client'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+                role === 'client' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className={`text-sm font-semibold ${role === 'client' ? 'text-blue-700' : 'text-gray-700'}`}>
+                  Cliente
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  Busco servicios
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole('provider')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                role === 'provider'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+                role === 'provider' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className={`text-sm font-semibold ${role === 'provider' ? 'text-blue-700' : 'text-gray-700'}`}>
+                  Profesional
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  Ofrezco servicios
+                </div>
+              </div>
+            </button>
+          </div>
+          {role === 'provider' && (
+            <p className="text-[11px] text-blue-600 mt-2 flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+              Como profesional, también podrás solicitar servicios como cliente
+            </p>
+          )}
+        </div>
 
         <div className="space-y-4">
           <div>

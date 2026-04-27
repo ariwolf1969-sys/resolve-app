@@ -8,73 +8,73 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  name              String
-  phone             String    @unique
-  email             String?   @unique
-  avatar            String?
-  bio               String?
-  location          String?
-  lat               Float?
-  lng               Float?
-  neighborhood      String?
-  province          String?
-  city              String?
-  workZone          String?
-  profession        String?
-  skills            String?
-  experience        String?
-  hourlyRate        Float?
-  available         Boolean   @default(true)
-  verified          Boolean   @default(false)
-  dniVerified       Boolean   @default(false)
-  dniNumber         String?
-  dniPhotoUrl       String?
-  selfieDniUrl      String?
-  ratingAvg         Float     @default(0)
-  ratingCount       Int       @default(0)
-  completedJobs     Int       @default(0)
-  balance           Float     @default(0)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  needs              Need[]     @relation("NeedAuthor")
-  responses          Response[]
-  ratingsGiven       Rating[]   @relation("Rater")
-  ratingsReceived    Rating[]   @relation("Rated")
-  threads1           ChatThread[] @relation("ThreadParticipant1")
-  threads2           ChatThread[] @relation("ThreadParticipant2")
-  messages           Message[]
-  quotesSent         Quote[]     @relation("QuoteProvider")
-  quotesReceived     Quote[]     @relation("QuoteClient")
-  transactions       Transaction[]
-  checkIns           CheckIn[]
-  disputesFiled      Dispute[]   @relation("DisputeFiler")
-  disputesReceived   Dispute[]   @relation("DisputeReceiver")
+  id               String        @id @default(cuid())
+  name             String
+  phone            String        @unique
+  email            String?       @unique
+  password         String?
+  role             String        @default("client")  // "client" | "provider"
+  avatar           String?
+  bio              String?
+  location         String?
+  lat              Float?
+  lng              Float?
+  neighborhood     String?
+  province         String?
+  city             String?
+  workZone         String?
+  profession       String?
+  skills           String?
+  experience       String?
+  hourlyRate       Float?
+  available        Boolean       @default(true)
+  verified         Boolean       @default(false)
+  dniVerified      Boolean       @default(false)
+  dniNumber        String?
+  dniPhotoUrl      String?
+  selfieDniUrl     String?
+  ratingAvg        Float         @default(0)
+  ratingCount      Int           @default(0)
+  completedJobs    Int           @default(0)
+  balance          Float         @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  threads2         ChatThread[]  @relation("ThreadParticipant2")
+  threads1         ChatThread[]  @relation("ThreadParticipant1")
+  checkIns         CheckIn[]
+  disputesReceived Dispute[]     @relation("DisputeReceiver")
+  disputesFiled    Dispute[]     @relation("DisputeFiler")
+  messages         Message[]
+  needs            Need[]        @relation("NeedAuthor")
+  quotesReceived   Quote[]       @relation("QuoteClient")
+  quotesSent       Quote[]       @relation("QuoteProvider")
+  ratingsReceived  Rating[]      @relation("Rated")
+  ratingsGiven     Rating[]      @relation("Rater")
+  responses        Response[]
+  transactions     Transaction[]
 }
 
 model Need {
-  id           String   @id @default(cuid())
+  id           String       @id @default(cuid())
   title        String
   description  String?
   category     String
   budget       Float?
-  urgent       Boolean  @default(false)
-  status       String   @default("active")
+  urgent       Boolean      @default(false)
+  status       String       @default("active")
   lat          Float?
   lng          Float?
   location     String?
   neighborhood String?
   distanceKm   Float?
   authorId     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  author    User       @relation("NeedAuthor", fields: [authorId], references: [id])
-  responses Response[]
-  chatThreads ChatThread[]
-  ratings   Rating[]
-  quotes    Quote[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  chatThreads  ChatThread[]
+  author       User         @relation("NeedAuthor", fields: [authorId], references: [id])
+  quotes       Quote[]
+  ratings      Rating[]
+  responses    Response[]
 }
 
 model Response {
@@ -85,37 +85,34 @@ model Response {
   status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  need Need @relation(fields: [needId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  need      Need     @relation(fields: [needId], references: [id])
 }
 
 model ChatThread {
-  id              String    @id @default(cuid())
-  needId          String?
-  participant1Id  String
-  participant2Id  String
-  lastMessage     String?
-  lastMessageAt   DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  need         Need?   @relation(fields: [needId], references: [id])
-  participant1 User    @relation("ThreadParticipant1", fields: [participant1Id], references: [id])
-  participant2 User    @relation("ThreadParticipant2", fields: [participant2Id], references: [id])
-  messages     Message[]
+  id             String    @id @default(cuid())
+  needId         String?
+  participant1Id String
+  participant2Id String
+  lastMessage    String?
+  lastMessageAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  participant2   User      @relation("ThreadParticipant2", fields: [participant2Id], references: [id])
+  participant1   User      @relation("ThreadParticipant1", fields: [participant1Id], references: [id])
+  need           Need?     @relation(fields: [needId], references: [id])
+  messages       Message[]
 }
 
 model Message {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   content   String
   threadId  String
   senderId  String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  sender User       @relation(fields: [senderId], references: [id])
+  read      Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  sender    User       @relation(fields: [senderId], references: [id])
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 }
 
 model Rating {
@@ -126,146 +123,131 @@ model Rating {
   ratedId   String
   needId    String?
   createdAt DateTime @default(now())
-
-  rater User @relation("Rater", fields: [raterId], references: [id])
-  rated User @relation("Rated", fields: [ratedId], references: [id])
-  need  Need? @relation(fields: [needId], references: [id])
+  need      Need?    @relation(fields: [needId], references: [id])
+  rated     User     @relation("Rated", fields: [ratedId], references: [id])
+  rater     User     @relation("Rater", fields: [raterId], references: [id])
 }
 
-// ====== NEW MODELS ======
-
-// Affiliate products from external marketplaces
 model AffiliateProduct {
-  id              String   @id @default(cuid())
-  title           String
-  description     String?
-  price           Float
-  originalPrice   Float?
-  currency        String   @default("ARS")
-  imageUrl        String?
-  sourceUrl       String
-  affiliateUrl    String?
-  source          String   // amazon, ebay, mercadolibre, aliexpress, temu, shein
-  externalId      String?  @unique
-  category        String
-  categoryPath    String?
-  brand           String?
-  seller          String?
-  rating          Float?
-  reviewCount     Int      @default(0)
-  soldQuantity    Int      @default(0)
-  commission      Float    @default(0) // commission percentage
-  active          Boolean  @default(true)
-  featured        Boolean  @default(false)
-  syncedAt        DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  clicks          AffiliateClick[]
+  id            String           @id @default(cuid())
+  title         String
+  description   String?
+  price         Float
+  originalPrice Float?
+  currency      String           @default("ARS")
+  imageUrl      String?
+  sourceUrl     String
+  affiliateUrl  String?
+  source        String
+  externalId    String?          @unique
+  category      String
+  categoryPath  String?
+  brand         String?
+  seller        String?
+  rating        Float?
+  reviewCount   Int              @default(0)
+  soldQuantity  Int              @default(0)
+  commission    Float            @default(0)
+  active        Boolean          @default(true)
+  featured      Boolean          @default(false)
+  syncedAt      DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  clicks        AffiliateClick[]
 }
 
-// Click tracking for affiliate products
 model AffiliateClick {
-  id            String   @id @default(cuid())
-  productId     String
-  sessionId     String?
-  ip            String?
-  userAgent     String?
-  referrer      String?
-  converted     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-
-  product       AffiliateProduct @relation(fields: [productId], references: [id])
+  id        String           @id @default(cuid())
+  productId String
+  sessionId String?
+  ip        String?
+  userAgent String?
+  referrer  String?
+  converted Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  product   AffiliateProduct @relation(fields: [productId], references: [id])
 }
 
-// Quotes / Budgets from professionals to clients
 model Quote {
-  id              String   @id @default(cuid())
-  title           String
-  description     String
-  amount          Float
-  currency        String   @default("ARS")
-  status          String   @default("pending") // pending, accepted, rejected, completed, cancelled
-  needId          String?
-  providerId      String
-  clientId        String
-  validityHours   Int      @default(48) // how long the quote is valid
-  includesMaterials Boolean @default(false)
-  estimatedHours  Float?
-  providerMessage String?
-  clientMessage   String?
-  depositPaid     Boolean   @default(false)
-  depositAmount   Float?
-  validUntil      DateTime?
-  acceptedAt      DateTime?
-  rejectedAt      DateTime?
-  completedAt     DateTime?
-  expiresAt       DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  need      Need?  @relation(fields: [needId], references: [id])
-  provider  User   @relation("QuoteProvider", fields: [providerId], references: [id])
-  client    User   @relation("QuoteClient", fields: [clientId], references: [id])
-  transactions Transaction[]
-  checkIns   CheckIn[]
-  disputes   Dispute[]
+  id                String        @id @default(cuid())
+  title             String
+  description       String
+  amount            Float
+  currency          String        @default("ARS")
+  status            String        @default("pending")
+  needId            String?
+  providerId        String
+  clientId          String
+  validityHours     Int           @default(48)
+  includesMaterials Boolean       @default(false)
+  estimatedHours    Float?
+  providerMessage   String?
+  clientMessage     String?
+  depositPaid       Boolean       @default(false)
+  depositAmount     Float?
+  validUntil        DateTime?
+  acceptedAt        DateTime?
+  rejectedAt        DateTime?
+  completedAt       DateTime?
+  expiresAt         DateTime
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  checkIns          CheckIn[]
+  disputes          Dispute[]
+  client            User          @relation("QuoteClient", fields: [clientId], references: [id])
+  provider          User          @relation("QuoteProvider", fields: [providerId], references: [id])
+  need              Need?         @relation(fields: [needId], references: [id])
+  transactions      Transaction[]
 }
 
-// Payment transactions (escrow system)
 model Transaction {
-  id              String   @id @default(cuid())
-  quoteId         String
-  amount          Float
-  currency        String   @default("ARS")
-  platformFee     Float    @default(0) // platform commission
-  status          String   @default("pending") // pending, held, released, refunded, disputed
-  paymentMethod   String   // mercadopago, transferencia, tarjeta
-  paymentRef      String?  // external payment reference
-  releasedAt      DateTime?
-  refundedAt      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  quote    Quote @relation(fields: [quoteId], references: [id])
-  user     User  @relation(fields: [userId], references: [id])
-  userId   String
-}
-
-// Check-in system for anti-fraud (GPS + photo proof)
-model CheckIn {
-  id          String   @id @default(cuid())
-  quoteId     String
-  userId      String
-  type        String   // arrival, start_work, progress, completion
-  lat         Float?
-  lng         Float?
-  address     String?
-  photoUrl    String?
-  notes       String?
-  verified    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  quote Quote @relation(fields: [quoteId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
-}
-
-// Dispute resolution system
-model Dispute {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   quoteId       String
-  filedById     String
-  againstId     String
-  reason        String
-  description   String
-  status        String   @default("open") // open, investigating, resolved, dismissed
-  resolution    String?
-  evidence      String?  // JSON array of evidence URLs
-  resolvedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  amount        Float
+  currency      String    @default("ARS")
+  platformFee   Float     @default(0)
+  status        String    @default("pending")
+  paymentMethod String
+  paymentRef    String?
+  releasedAt    DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  quote         Quote     @relation(fields: [quoteId], references: [id])
+}
 
-  quote     Quote @relation(fields: [quoteId], references: [id])
-  filedBy   User  @relation("DisputeFiler", fields: [filedById], references: [id])
-  against   User  @relation("DisputeReceiver", fields: [againstId], references: [id])
+model CheckIn {
+  id        String   @id @default(cuid())
+  quoteId   String
+  userId    String
+  type      String
+  lat       Float?
+  lng       Float?
+  address   String?
+  photoUrl  String?
+  notes     String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  quote     Quote    @relation(fields: [quoteId], references: [id])
+}
+
+model Dispute {
+  id          String    @id @default(cuid())
+  quoteId     String
+  filedById   String
+  againstId   String
+  reason      String
+  description String
+  status      String    @default("open")
+  resolution  String?
+  evidence    String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  against     User      @relation("DisputeReceiver", fields: [againstId], references: [id])
+  filedBy     User      @relation("DisputeFiler", fields: [filedById], references: [id])
+  quote       Quote     @relation(fields: [quoteId], references: [id])
 }

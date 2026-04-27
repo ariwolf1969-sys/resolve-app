@@ -362,11 +362,11 @@ export function WebLandingScreen() {
       </section>
 
       {/* ──────────────── 4. TRUST & SECURITY ──────────────── */}
-      <section className="bg-gray-50 py-16 sm:py-20 lg:py-24">
+      <section className="group bg-gray-50 py-16 sm:py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
-              <Shield className="h-7 w-7 text-blue-500" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 transition-colors group-hover:bg-blue-500">
+              <Shield className="h-7 w-7 text-blue-500 transition-colors group-hover:text-white" />
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               Pagos 100% seguros
