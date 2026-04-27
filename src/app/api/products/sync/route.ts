@@ -50,7 +50,13 @@ async function handleSync(body: SyncRequestBody | undefined) {
         });
 
         // Build image URL (use highest quality picture if available)
-        const imageUrl = product.pictures?.[0]?.secure_url || product.thumbnail;
+        // ML thumbnails are low quality (600x600), pictures are higher (1200x1200)
+        // Convert thumbnail URL to full size: replace -O with -I for original size
+        let imageUrl = product.pictures?.[0]?.secure_url || null;
+        if (!imageUrl && product.thumbnail) {
+          // Upgrade thumbnail to original quality
+          imageUrl = product.thumbnail.replace(/-O\\.jpg$/i, '-I.jpg') || product.thumbnail.replace(/-O\\.png$/i, '-I.png') || product.thumbnail;
+        }
 
         // Build affiliate URL with UTM tracking
         const affiliateUrl = buildAffiliateUrl(product.permalink, 'mercadolibre');

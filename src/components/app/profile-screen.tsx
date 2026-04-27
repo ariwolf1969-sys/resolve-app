@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '@/store/app-store';
-import { getProvinceName } from '@/lib/argentina-locations';
+import { getProvinceName, isCaba } from '@/lib/argentina-locations';
 import { formatBudget, getCategoryName, getCategoryColor, timeAgo } from './home-screen';
 
 export function ProfileScreen() {
@@ -39,14 +39,17 @@ export function ProfileScreen() {
 
   // Build location display
   const locationDisplay = (() => {
-    if (currentUser.city && currentUser.province) {
-      const provName = getProvinceName(currentUser.province);
-      return `${currentUser.city}, ${provName}`;
+    // For CABA: show barrio (stored in city) + province name
+    if (currentUser.province && isCaba(currentUser.province)) {
+      if (currentUser.city) return `${currentUser.city}, CABA`;
+      return 'CABA';
     }
-    if (currentUser.city) return currentUser.city;
-    if (currentUser.province) return getProvinceName(currentUser.province);
-    if (currentUser.neighborhood) return currentUser.neighborhood;
-    return 'Argentina';
+    // For other provinces: neighborhood + city + province
+    const parts: string[] = [];
+    if (currentUser.neighborhood) parts.push(currentUser.neighborhood);
+    if (currentUser.city) parts.push(currentUser.city);
+    if (currentUser.province) parts.push(getProvinceName(currentUser.province));
+    return parts.length > 0 ? parts.join(', ') : 'Argentina';
   })();
 
   return (

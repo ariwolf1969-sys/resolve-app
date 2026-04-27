@@ -93,21 +93,30 @@ export default function AppContainer() {
 function EditProfileScreen() {
   const { setView, currentUser, setCurrentUser } = useAppStore();
   const [name, setName] = useState(currentUser?.name || '');
+  const [phone, setPhone] = useState(currentUser?.phone ? currentUser.phone.replace('+54', '') : '');
   const [neighborhood, setNeighborhood] = useState(currentUser?.neighborhood || currentUser?.city || '');
   const [bio, setBio] = useState(currentUser?.bio || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const handleSave = async () => {
+    if (!name.trim()) return;
     setSaving(true);
     try {
+      const phoneDigits = phone.replace(/\D/g, '');
+      const updates: Record<string, unknown> = { name: name.trim(), neighborhood: neighborhood.trim() || null, bio: bio.trim() || null };
+      if (phoneDigits.length >= 8) {
+        updates.phone = '+54' + phoneDigits;
+      }
       const res = await fetch(`/api/users/${currentUser?.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, neighborhood, bio }),
+        body: JSON.stringify(updates),
       });
       if (res.ok) {
-        setCurrentUser({ ...currentUser!, name, neighborhood, bio });
+        const updatedUser = await res.json();
+        setCurrentUser({ ...currentUser!, ...updatedUser });
         setSaved(true);
         setTimeout(() => setView('profile'), 800);
       }
@@ -124,6 +133,11 @@ function EditProfileScreen() {
     input.onchange = async (e: any) => {
       const file = e.target.files?.[0];
       if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('La imagen no puede superar los 5MB');
+        return;
+      }
+      setUploadingPhoto(true);
       const formData = new FormData();
       formData.append('avatar', file);
       try {
@@ -138,6 +152,7 @@ function EditProfileScreen() {
       } catch (err) {
         console.error(err);
       }
+      setUploadingPhoto(false);
     };
     input.click();
   };
@@ -158,18 +173,24 @@ function EditProfileScreen() {
         {currentUser?.avatar ? (
           <div className="w-20 h-20 rounded-2xl overflow-hidden relative">
             <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            {uploadingPhoto && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>}
           </div>
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center relative">
             <span className="text-3xl font-bold text-blue-500">{currentUser?.name?.charAt(0)}</span>
+            {uploadingPhoto && <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center"><div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>}
           </div>
         )}
-        <button
-          onClick={handlePhotoClick}
-          className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
-        >
-          Cambiar foto
-        </button>
+        <div>
+          <button
+            onClick={handlePhotoClick}
+            disabled={uploadingPhoto}
+            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors disabled:opacity-50"
+          >
+            {uploadingPhoto ? 'Subiendo...' : 'Cambiar foto'}
+          </button>
+          <p className="text-[10px] text-muted-foreground mt-1">JPG o PNG, máximo 5MB</p>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -179,8 +200,21 @@ function EditProfileScreen() {
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-1 block">Teléfono</label>
-          <input type="tel" value={currentUser?.phone || ''} className="w-full p-3 rounded-lg border bg-background text-sm text-muted-foreground" disabled />
-          <p className="text-[10px] text-muted-foreground mt-1">El teléfono no se puede cambiar desde aquí</p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">+54</span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              value={phone}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, '');
+                if (digits.length <= 11) setPhone(digits);
+              }}
+              className="flex-1 p-3 rounded-lg border bg-background text-sm"
+              placeholder="11 12345678"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">Código de área + número (sin 0 ni 15)</p>
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-1 block">Barrio / Ciudad</label>
@@ -258,11 +292,19 @@ function ProductDetailScreen() {
 
       {/* Product Image */}
       <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-          <rect x="2" y="2" width="20" height="20" rx="2" />
-          <circle cx="8.5" cy="8.5" r="1.5" />
-          <path d="m21 15-5-5L5 21" />
-        </svg>
+        {selectedProduct.imageUrl ? (
+          <img
+            src={selectedProduct.imageUrl}
+            alt={selectedProduct.title}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <rect x="2" y="2" width="20" height="20" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="m21 15-5-5L5 21" />
+          </svg>
+        )}
         {discount > 0 && (
           <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-sm font-bold">
             -{discount}%

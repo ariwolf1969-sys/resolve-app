@@ -18,6 +18,9 @@ export async function GET(
         bio: true,
         location: true,
         neighborhood: true,
+        province: true,
+        city: true,
+        workZone: true,
         lat: true,
         lng: true,
         profession: true,
@@ -91,6 +94,10 @@ export async function PATCH(
         ...(body.dniNumber !== undefined && { dniNumber: body.dniNumber }),
         ...(body.dniPhotoUrl !== undefined && { dniPhotoUrl: body.dniPhotoUrl }),
         ...(body.selfieDniUrl !== undefined && { selfieDniUrl: body.selfieDniUrl }),
+        ...(body.phone !== undefined && { phone: body.phone }),
+        ...(body.province !== undefined && { province: body.province }),
+        ...(body.city !== undefined && { city: body.city }),
+        ...(body.workZone !== undefined && { workZone: body.workZone }),
       }
     });
 

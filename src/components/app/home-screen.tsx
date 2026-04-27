@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppStore, type Need, type Category, type User } from '@/store/app-store';
-import { getProvinceName } from '@/lib/argentina-locations';
+import { getProvinceName, isCaba } from '@/lib/argentina-locations';
 
 // Legacy categories for needs (still supported)
 const CATEGORIES: Category[] = [
@@ -283,14 +283,16 @@ export function HomeScreen() {
             <h1 className="text-xl font-bold text-white">Resolvé</h1>
             {currentUser ? (
               <p className="text-blue-100 text-xs mt-0.5">
-                {currentUser.city 
-                  ? `${currentUser.city}, ${currentUser.province ? getProvinceName(currentUser.province) : ''}`
-                  : currentUser.province 
-                    ? getProvinceName(currentUser.province)
-                    : currentUser.neighborhood 
-                      ? currentUser.neighborhood
-                      : ''
-                }{' '}· Toda Argentina
+                {currentUser.province && isCaba(currentUser.province)
+                  ? (currentUser.city ? `${currentUser.city}, CABA` : 'CABA')
+                  : currentUser.city && currentUser.province
+                    ? `${currentUser.city}, ${getProvinceName(currentUser.province)}`
+                    : currentUser.province
+                      ? getProvinceName(currentUser.province)
+                      : currentUser.neighborhood
+                        ? currentUser.neighborhood
+                        : 'Argentina'
+                }
               </p>
             ) : (
               <p className="text-blue-100 text-xs mt-0.5">Encontrá profesionales en toda Argentina</p>

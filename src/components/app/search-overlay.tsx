@@ -22,7 +22,6 @@ export function SearchOverlay() {
   const [professionals, setProfessionals] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'price_asc' | 'price_desc' | 'distance'>('rating');
-  const [showLocationFilter, setShowLocationFilter] = useState(false);
 
   const clearLocationFilters = () => {
     setSelectedProvince('');
@@ -111,81 +110,67 @@ export function SearchOverlay() {
           </div>
         )}
 
-        {/* Location Filter */}
-        <div className="mt-3">
-          <button
-            onClick={() => setShowLocationFilter(!showLocationFilter)}
-            className="flex items-center gap-2 text-xs font-semibold text-foreground"
+        {/* Location Filter - Always visible */}
+        <div className="mt-3 bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+            <span className="text-xs font-semibold text-foreground">Filtrar por ubicación</span>
+            {(selectedProvince || selectedCity || selectedWorkZone) && (
+              <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 text-[9px]">Activo</span>
+            )}
+          </div>
+          {/* Province select */}
+          <select
+            value={selectedProvince}
+            onChange={(e) => setSelectedProvince(e.target.value)}
+            className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-            <span>Filtrar por ubicación</span>
-            {selectedProvince && <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 text-[9px]">Activo</span>}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`h-3.5 w-3.5 transition-transform ${showLocationFilter ? 'rotate-180' : ''}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
+            <option value="">Todas las provincias</option>
+            {ARGENTINA_PROVINCES.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+
+          {/* City select - always visible when province selected */}
+          {selectedProvince && (
+            <select
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+              className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
+              <option value="">
+                {selectedProvince === 'caba' ? 'Todos los barrios' : 'Todas las ciudades'}
+              </option>
+              {getCitiesByProvince(selectedProvince).map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          )}
 
-          {showLocationFilter && (
-            <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2 mt-2">
-              {/* Province select */}
-              <select
-                value={selectedProvince}
-                onChange={(e) => setSelectedProvince(e.target.value)}
-                className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              >
-                <option value="">Todas las provincias</option>
-                {ARGENTINA_PROVINCES.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-
-              {/* City select (conditional) */}
-              {selectedProvince && (
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          {/* Work zone buttons for CABA and Buenos Aires */}
+          {selectedProvince && ['caba', 'buenos_aires'].includes(selectedProvince) && (
+            <div className="flex gap-1.5 flex-wrap">
+              {getWorkZonesByProvince(selectedProvince).map(zone => (
+                <button
+                  key={zone}
+                  onClick={() => setSelectedWorkZone(selectedWorkZone === zone ? '' : zone)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                    selectedWorkZone === zone
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-gray-200'
+                  }`}
                 >
-                  <option value="">Todas las ciudades</option>
-                  {getCitiesByProvince(selectedProvince).map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              )}
-
-              {/* Work zone buttons (conditional) */}
-              {selectedProvince && ['caba', 'buenos_aires'].includes(selectedProvince) && (
-                <div className="flex gap-1.5 flex-wrap">
-                  {getWorkZonesByProvince(selectedProvince).map(zone => (
-                    <button
-                      key={zone}
-                      onClick={() => setSelectedWorkZone(selectedWorkZone === zone ? '' : zone)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
-                        selectedWorkZone === zone
-                          ? 'bg-blue-500 text-white shadow-sm'
-                          : 'bg-muted text-muted-foreground hover:bg-gray-200'
-                      }`}
-                    >
-                      {zone}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Clear filter button */}
-              {(selectedProvince || selectedCity) && (
-                <button onClick={clearLocationFilters} className="text-xs text-red-500 font-medium hover:text-red-600 transition-colors">
-                  Limpiar filtros
+                  {zone}
                 </button>
-              )}
+              ))}
             </div>
+          )}
+
+          {/* Clear filter button */}
+          {(selectedProvince || selectedCity || selectedWorkZone) && (
+            <button onClick={clearLocationFilters} className="text-xs text-red-500 font-medium hover:text-red-600 transition-colors">
+              Limpiar filtros
+            </button>
           )}
         </div>
       </div>

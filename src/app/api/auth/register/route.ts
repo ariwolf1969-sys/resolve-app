@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, password, role, dniNumber, province, city } = await req.json()
+    const { name, email, phone, password, role, dniNumber, province, city, neighborhood } = await req.json()
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 })
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
         dniNumber: dniNumber || undefined,
         province: province || undefined,
         city: city || undefined,
+        neighborhood: neighborhood ? neighborhood.trim() : undefined,
       },
     })
 
@@ -58,6 +59,23 @@ export async function POST(req: NextRequest) {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      province: user.province,
+      city: user.city,
+      neighborhood: user.neighborhood,
+      avatar: user.avatar,
+      profession: user.profession,
+      bio: user.bio,
+      skills: user.skills,
+      experience: user.experience,
+      hourlyRate: user.hourlyRate,
+      available: user.available,
+      verified: user.verified,
+      dniVerified: user.dniVerified,
+      dniNumber: user.dniNumber,
+      ratingAvg: user.ratingAvg,
+      ratingCount: user.ratingCount,
+      completedJobs: user.completedJobs,
+      createdAt: user.createdAt,
     })
   } catch (error) {
     console.error('Register error:', error)
