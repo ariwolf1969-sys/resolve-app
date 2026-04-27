@@ -136,24 +136,46 @@ model Rating {
 
 // Affiliate products from external marketplaces
 model AffiliateProduct {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  price           Float
+  originalPrice   Float?
+  currency        String   @default("ARS")
+  imageUrl        String?
+  sourceUrl       String
+  affiliateUrl    String?
+  source          String   // amazon, ebay, mercadolibre, aliexpress, temu, shein
+  externalId      String?  @unique
+  category        String
+  categoryPath    String?
+  brand           String?
+  seller          String?
+  rating          Float?
+  reviewCount     Int      @default(0)
+  soldQuantity    Int      @default(0)
+  commission      Float    @default(0) // commission percentage
+  active          Boolean  @default(true)
+  featured        Boolean  @default(false)
+  syncedAt        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  clicks          AffiliateClick[]
+}
+
+// Click tracking for affiliate products
+model AffiliateClick {
   id            String   @id @default(cuid())
-  title         String
-  description   String?
-  price         Float
-  originalPrice Float?
-  currency      String   @default("ARS")
-  imageUrl      String?
-  sourceUrl     String
-  source        String   // amazon, ebay, mercadolibre, aliexpress, temu, shein
-  category      String
-  brand         String?
-  rating        Float?
-  reviewCount   Int      @default(0)
-  commission    Float    @default(0) // commission percentage
-  active        Boolean  @default(true)
-  featured      Boolean  @default(false)
+  productId     String
+  sessionId     String?
+  ip            String?
+  userAgent     String?
+  referrer      String?
+  converted     Boolean  @default(false)
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  product       AffiliateProduct @relation(fields: [productId], references: [id])
 }
 
 // Quotes / Budgets from professionals to clients

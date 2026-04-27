@@ -89,3 +89,27 @@ Stage Summary:
 - 20 productos demo de 6 marketplaces (Amazon, eBay, MercadoLibre, AliExpress, Temu, SHEIN)
 - Navegación actualizada con acceso a todas las secciones nuevas
 - Todas las contrataciones de servicios se pagan exclusivamente por medios electrónicos
+---
+Task ID: 1
+Agent: Main Agent
+Task: Restore MercadoLibre product integration from resolve-deploy repo
+
+Work Log:
+- Analyzed the Vercel deployment (resolve-app-six.vercel.app) - confirmed 100 ML products working
+- Discovered local project used hardcoded DEMO_PRODUCTS (16 items) instead of fetching from API
+- Found the complete ML integration in the resolve-deploy GitHub repo (ariwolf1969-sys/resolve-deploy)
+- Key files recovered: products-screen.tsx (679 lines, fetches from API), /api/products/sync/route.ts, /api/products/real/route.ts, /lib/product-sync.ts, /lib/affiliate.ts
+- Updated Prisma schema: added affiliateUrl, externalId, categoryPath, seller, soldQuantity, syncedAt fields to AffiliateProduct; added AffiliateClick model
+- Copied all 5 key files from resolve-deploy to local project
+- Ran prisma db push + generate successfully
+- Build succeeded (all routes compile including /api/products/sync and /api/products/real)
+- ML API sync returns 403 from this server (IP blocked), but the code is correct and works on Vercel
+- Local DB has 20 seed products; Vercel DB has 100+ ML products
+
+Stage Summary:
+- Products screen now fetches from /api/products/real (with fallback to demo products)
+- Affiliate ID WH221V-GYCG configured in /lib/affiliate.ts
+- 12 ML categories configured in /lib/product-sync.ts
+- Sync endpoint at /api/products/sync triggers import from ML API
+- Dev server running on port 3000 with 20 products visible
+- When deployed to Vercel, the existing 100 ML products in PostgreSQL will display

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useAppStore, type AffiliateProduct } from '@/store/app-store';
 import {
   Search,
@@ -11,355 +11,107 @@ import {
   ShoppingBag,
   ChevronRight,
   Heart,
+  RefreshCw,
+  WifiOff,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // ====== Source Configuration ======
 const SOURCES = [
-  { id: 'all', name: 'Todos', color: '#6B7280', bg: 'bg-gray-500' },
-  { id: 'Amazon', name: 'Amazon', color: '#FF9900', bg: 'bg-orange-500' },
-  { id: 'eBay', name: 'eBay', color: '#0064D2', bg: 'bg-blue-600' },
-  { id: 'MercadoLibre', name: 'MercadoLibre', color: '#FFE600', bg: 'bg-yellow-400' },
-  { id: 'AliExpress', name: 'AliExpress', color: '#FF4747', bg: 'bg-red-500' },
-  { id: 'Temu', name: 'Temu', color: '#FB6F20', bg: 'bg-purple-600' },
-  { id: 'SHEIN', name: 'SHEIN', color: '#E11B1B', bg: 'bg-pink-500' },
+  { id: 'all', name: 'Todos', color: '#6B7280' },
+  { id: 'mercadolibre', name: 'MercadoLibre', color: '#FFE600' },
+  { id: 'Amazon', name: 'Amazon', color: '#FF9900' },
+  { id: 'eBay', name: 'eBay', color: '#0064D2' },
+  { id: 'AliExpress', name: 'AliExpress', color: '#FF4747' },
+  { id: 'Temu', name: 'Temu', color: '#FB6F20' },
+  { id: 'SHEIN', name: 'SHEIN', color: '#E11B1B' },
 ];
 
 const CATEGORIES = [
   { id: 'all', name: 'Todos' },
-  { id: 'Electrónica', name: 'Electrónica' },
-  { id: 'Hogar', name: 'Hogar' },
-  { id: 'Herramientas', name: 'Herramientas' },
-  { id: 'Ropa', name: 'Ropa' },
-  { id: 'Deportes', name: 'Deportes' },
-  { id: 'Tecnología', name: 'Tecnología' },
+  { id: 'celulares', name: 'Celulares' },
+  { id: 'notebooks', name: 'Notebooks' },
+  { id: 'televisores', name: 'Televisores' },
+  { id: 'zapatillas', name: 'Zapatillas' },
+  { id: 'auriculares', name: 'Auriculares' },
+  { id: 'videojuegos', name: 'Videojuegos' },
+  { id: 'electrodomesticos', name: 'Electrodomésticos' },
+  { id: 'herramientas', name: 'Herramientas' },
+  { id: 'ropa-deportiva', name: 'Ropa Deportiva' },
+  { id: 'accesorios-tech', name: 'Accesorios Tech' },
+  { id: 'ropa-mujer', name: 'Ropa Mujer' },
+  { id: 'ropa-hombre', name: 'Ropa Hombre' },
 ];
 
 function getSourceConfig(source: string) {
   return SOURCES.find((s) => s.id === source) || SOURCES[0];
 }
 
-// ====== Demo Products ======
-const DEMO_PRODUCTS: AffiliateProduct[] = [
+// ====== Fallback Demo Products ======
+const FALLBACK_PRODUCTS: AffiliateProduct[] = [
   {
-    id: 'prod-1',
-    title: 'Auriculares Bluetooth Inalámbricos con Cancelación de Ruido Pro',
+    id: 'demo-1', title: 'Auriculares Bluetooth Inalámbricos con Cancelación de Ruido Pro',
     description: 'Auriculares over-ear premium con ANC, 40hs de batería y sonido Hi-Res',
-    price: 85900,
-    originalPrice: 129900,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://amazon.com',
-    source: 'Amazon',
-    category: 'Electrónica',
-    brand: 'Sony',
-    rating: 4.7,
-    reviewCount: 2340,
-    commission: 5,
-    active: true,
-    featured: true,
-    createdAt: '2025-01-10T10:00:00Z',
-    updatedAt: '2025-01-15T10:00:00Z',
+    price: 85900, originalPrice: 129900, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'auriculares', brand: 'Sony', rating: 4.7, reviewCount: 2340,
+    commission: 9, active: true, featured: true, createdAt: '2025-01-10T10:00:00Z', updatedAt: '2025-01-15T10:00:00Z',
   },
   {
-    id: 'prod-2',
-    title: 'Taladro Percutor Inalámbrico 20V con Kit de Accesorios',
-    description: 'Taladro compacto con 2 baterías de litio, maletín y 50 accesorios incluidos',
-    price: 125000,
-    originalPrice: 178000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://mercadolibre.com.ar',
-    source: 'MercadoLibre',
-    category: 'Herramientas',
-    brand: 'Bosch',
-    rating: 4.5,
-    reviewCount: 876,
-    commission: 4,
-    active: true,
-    featured: true,
-    createdAt: '2025-01-08T10:00:00Z',
-    updatedAt: '2025-01-14T10:00:00Z',
+    id: 'demo-2', title: 'Taladro Percutor Inalámbrico 20V con Kit de Accesorios',
+    description: 'Taladro compacto con 2 baterías de litio, maletín y 50 accesorios',
+    price: 125000, originalPrice: 178000, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'herramientas', brand: 'Bosch', rating: 4.5, reviewCount: 876,
+    commission: 7, active: true, featured: true, createdAt: '2025-01-08T10:00:00Z', updatedAt: '2025-01-14T10:00:00Z',
   },
   {
-    id: 'prod-3',
-    title: 'Smart TV 55" 4K UHD con WebOS y Chromecast Integrado',
+    id: 'demo-3', title: 'Smart TV 55" 4K UHD con WebOS y Chromecast Integrado',
     description: 'Television LED 55 pulgadas con resolución 4K, HDR10 y WiFi integrado',
-    price: 398000,
-    originalPrice: 520000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://ebay.com',
-    source: 'eBay',
-    category: 'Tecnología',
-    brand: 'LG',
-    rating: 4.3,
-    reviewCount: 1520,
-    commission: 3,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-05T10:00:00Z',
-    updatedAt: '2025-01-12T10:00:00Z',
+    price: 398000, originalPrice: 520000, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'televisores', brand: 'LG', rating: 4.3, reviewCount: 1520,
+    commission: 6, active: true, featured: false, createdAt: '2025-01-05T10:00:00Z', updatedAt: '2025-01-12T10:00:00Z',
   },
   {
-    id: 'prod-4',
-    title: 'Zapatillas Running Ultralivianas para Entrenamiento Diario',
+    id: 'demo-4', title: 'Zapatillas Running Ultralivianas para Entrenamiento Diario',
     description: 'Zapatillas deportivas con suela gel, transpirables y amortiguación superior',
-    price: 48900,
-    originalPrice: 68500,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://aliexpress.com',
-    source: 'AliExpress',
-    category: 'Deportes',
-    brand: 'Nike',
-    rating: 4.1,
-    reviewCount: 3200,
-    commission: 6,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-06T10:00:00Z',
-    updatedAt: '2025-01-11T10:00:00Z',
+    price: 48900, originalPrice: 68500, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'zapatillas', brand: 'Nike', rating: 4.1, reviewCount: 3200,
+    commission: 10, active: true, featured: false, createdAt: '2025-01-06T10:00:00Z', updatedAt: '2025-01-11T10:00:00Z',
   },
   {
-    id: 'prod-5',
-    title: 'Set de Sábanas Algodón Premium 300 Hilos King Size',
-    description: 'Juego completo de sábanas con 2 fundas, tejido satén, anti-ácaros',
-    price: 35600,
-    originalPrice: undefined,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://temu.com',
-    source: 'Temu',
-    category: 'Hogar',
-    brand: 'HomeStyle',
-    rating: 4.4,
-    reviewCount: 680,
-    commission: 7,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-09T10:00:00Z',
-    updatedAt: '2025-01-13T10:00:00Z',
-  },
-  {
-    id: 'prod-6',
-    title: 'Buzo Oversize Canguro Algodón Unisex - Colección Otoño',
-    description: 'Buzón de algodón peinado, corte oversize, capucha con cordones',
-    price: 18500,
-    originalPrice: 28000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://shein.com',
-    source: 'SHEIN',
-    category: 'Ropa',
-    brand: 'SHEIN',
-    rating: 3.9,
-    reviewCount: 5400,
-    commission: 8,
-    active: true,
-    featured: true,
-    createdAt: '2025-01-07T10:00:00Z',
-    updatedAt: '2025-01-10T10:00:00Z',
-  },
-  {
-    id: 'prod-7',
-    title: 'Cargador Inalámbrico Rápido 15W para iPhone y Android',
+    id: 'demo-5', title: 'Cargador Inalámbrico Rápido 15W para iPhone y Android',
     description: 'Base de carga Qi con indicador LED, compatible con todos los dispositivos',
-    price: 12800,
-    originalPrice: 19500,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://amazon.com',
-    source: 'Amazon',
-    category: 'Tecnología',
-    brand: 'Anker',
-    rating: 4.6,
-    reviewCount: 4120,
-    commission: 5,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-04T10:00:00Z',
-    updatedAt: '2025-01-09T10:00:00Z',
+    price: 12800, originalPrice: 19500, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'electrodomesticos', brand: 'Anker', rating: 4.6, reviewCount: 4120,
+    commission: 5, active: true, featured: false, createdAt: '2025-01-04T10:00:00Z', updatedAt: '2025-01-09T10:00:00Z',
   },
   {
-    id: 'prod-8',
-    title: 'Robot Aspiradora con Mapeo Láser y Estación de Vaciado',
+    id: 'demo-6', title: 'Robot Aspiradora con Mapeo Láser y Estación de Vaciado',
     description: 'Aspiradora inteligente con navegación LiDAR, succión 4000Pa y app WiFi',
-    price: 285000,
-    originalPrice: 380000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://mercadolibre.com.ar',
-    source: 'MercadoLibre',
-    category: 'Hogar',
-    brand: 'Roborock',
-    rating: 4.8,
-    reviewCount: 320,
-    commission: 4,
-    active: true,
-    featured: true,
-    createdAt: '2025-01-03T10:00:00Z',
-    updatedAt: '2025-01-08T10:00:00Z',
+    price: 285000, originalPrice: 380000, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'electrodomesticos', brand: 'Roborock', rating: 4.8, reviewCount: 320,
+    commission: 5, active: true, featured: true, createdAt: '2025-01-03T10:00:00Z', updatedAt: '2025-01-08T10:00:00Z',
   },
   {
-    id: 'prod-9',
-    title: 'Kit de Herramientas Mecánico 218 Piezas en Maletín',
-    description: 'Juego completo de llaves, destornilladores, alicates y accesorios profesionales',
-    price: 67800,
-    originalPrice: undefined,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://ebay.com',
-    source: 'eBay',
-    category: 'Herramientas',
-    brand: 'Stanley',
-    rating: 4.5,
-    reviewCount: 910,
-    commission: 3,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-02T10:00:00Z',
-    updatedAt: '2025-01-07T10:00:00Z',
+    id: 'demo-7', title: 'Notebook Gaming 15.6" Intel i7 RTX 4060 16GB RAM',
+    description: 'Laptop para gamers con pantalla FHD 144Hz, SSD 512GB y teclado RGB',
+    price: 685000, originalPrice: 820000, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'notebooks', brand: 'Lenovo', rating: 4.4, reviewCount: 560,
+    commission: 7, active: true, featured: false, createdAt: '2025-01-02T10:00:00Z', updatedAt: '2025-01-07T10:00:00Z',
   },
   {
-    id: 'prod-10',
-    title: 'Monitor Gaming Curvo 27" 165Hz QHD 1ms Response Time',
-    description: 'Monitor para gamers con panel VA, FreeSync Premium, HDR400 y speakers',
-    price: 245000,
-    originalPrice: 310000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://aliexpress.com',
-    source: 'AliExpress',
-    category: 'Tecnología',
-    brand: 'Samsung',
-    rating: 4.6,
-    reviewCount: 1870,
-    commission: 6,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-01T10:00:00Z',
-    updatedAt: '2025-01-06T10:00:00Z',
-  },
-  {
-    id: 'prod-11',
-    title: 'Campera Puffer Impermeable con Capucha - Invierno 2025',
-    description: 'Abrigo con relleno de plumón sintético, resistente al agua y viento',
-    price: 42500,
-    originalPrice: 65000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://shein.com',
-    source: 'SHEIN',
-    category: 'Ropa',
-    brand: 'SHEIN',
-    rating: 4.0,
-    reviewCount: 2300,
-    commission: 8,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-11T10:00:00Z',
-    updatedAt: '2025-01-15T10:00:00Z',
-  },
-  {
-    id: 'prod-12',
-    title: 'Mancuernas Ajustables 24kg par con Set de Discos',
-    description: 'Par de mancuernas ajustables rápidas, incluye soporte de almacenamiento',
-    price: 95000,
-    originalPrice: 135000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://temu.com',
-    source: 'Temu',
-    category: 'Deportes',
-    brand: 'Bowflex',
-    rating: 4.4,
-    reviewCount: 440,
-    commission: 7,
-    active: true,
-    featured: true,
-    createdAt: '2025-01-10T10:00:00Z',
-    updatedAt: '2025-01-14T10:00:00Z',
-  },
-  {
-    id: 'prod-13',
-    title: 'Teclado Mecánico RGB Gaming Switches Azules 60% Layout',
-    description: 'Teclado compacto hot-swap, iluminación por tecla, cable USB-C desmontable',
-    price: 52000,
-    originalPrice: 78000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://amazon.com',
-    source: 'Amazon',
-    category: 'Tecnología',
-    brand: 'Keychron',
-    rating: 4.8,
-    reviewCount: 1280,
-    commission: 5,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-09T10:00:00Z',
-    updatedAt: '2025-01-13T10:00:00Z',
-  },
-  {
-    id: 'prod-14',
-    title: 'Lámpara LED de Escritorio con Puerto USB y Regulador Táctil',
-    description: 'Luz de escritorio 5 modos de brillo, brazo flexible, carga USB integrada',
-    price: 15900,
-    originalPrice: 22000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://mercadolibre.com.ar',
-    source: 'MercadoLibre',
-    category: 'Hogar',
-    brand: 'Philips',
-    rating: 4.2,
-    reviewCount: 560,
-    commission: 4,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-08T10:00:00Z',
-    updatedAt: '2025-01-12T10:00:00Z',
-  },
-  {
-    id: 'prod-15',
-    title: 'Power Bank 20000mAh Carga Rápida PD 65W USB-C',
-    description: 'Batería externa con carga rápida, puede cargar notebooks y celulares',
-    price: 42000,
-    originalPrice: 58000,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://ebay.com',
-    source: 'eBay',
-    category: 'Electrónica',
-    brand: 'Xiaomi',
-    rating: 4.7,
-    reviewCount: 2890,
-    commission: 3,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-07T10:00:00Z',
-    updatedAt: '2025-01-11T10:00:00Z',
-  },
-  {
-    id: 'prod-16',
-    title: 'Flexómetro Profesional 5 Metros Magnético con Bloqueo',
-    description: 'Cinta métrica robusta con imán, superficie de lectura bidireccional',
-    price: 8900,
-    originalPrice: undefined,
-    currency: 'ARS',
-    imageUrl: '',
-    sourceUrl: 'https://aliexpress.com',
-    source: 'AliExpress',
-    category: 'Herramientas',
-    brand: 'Makita',
-    rating: 4.3,
-    reviewCount: 1560,
-    commission: 6,
-    active: true,
-    featured: false,
-    createdAt: '2025-01-06T10:00:00Z',
-    updatedAt: '2025-01-10T10:00:00Z',
+    id: 'demo-8', title: 'iPhone 15 128GB Negro Tela Titanio Libre',
+    description: 'Apple iPhone 15 con chip A16 Bionic, cámara 48MP y USB-C',
+    price: 1250000, originalPrice: 1380000, currency: 'ARS', imageUrl: '',
+    sourceUrl: 'https://mercadolibre.com.ar', source: 'mercadolibre',
+    category: 'celulares', brand: 'Apple', rating: 4.9, reviewCount: 8900,
+    commission: 8, active: true, featured: true, createdAt: '2025-01-01T10:00:00Z', updatedAt: '2025-01-06T10:00:00Z',
   },
 ];
 
@@ -378,89 +130,125 @@ function getDiscountPercent(price: number, originalPrice?: number): number | nul
 }
 
 function getSourceBadgeStyles(source: string): string {
-  switch (source) {
-    case 'Amazon':
-      return 'bg-orange-500/10 text-orange-700 border-orange-200';
-    case 'eBay':
-      return 'bg-blue-500/10 text-blue-700 border-blue-200';
-    case 'MercadoLibre':
-      return 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
-    case 'AliExpress':
-      return 'bg-red-500/10 text-red-700 border-red-200';
-    case 'Temu':
-      return 'bg-purple-500/10 text-purple-700 border-purple-200';
-    case 'SHEIN':
-      return 'bg-pink-500/10 text-pink-700 border-pink-200';
-    default:
-      return 'bg-gray-500/10 text-gray-700 border-gray-200';
-  }
+  const s = source.toLowerCase();
+  if (s.includes('mercadolibre') || s.includes('ml')) return 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
+  if (s.includes('amazon')) return 'bg-orange-500/10 text-orange-700 border-orange-200';
+  if (s.includes('ebay')) return 'bg-blue-500/10 text-blue-700 border-blue-200';
+  if (s.includes('aliexpress') || s.includes('ali')) return 'bg-red-500/10 text-red-700 border-red-200';
+  if (s.includes('temu')) return 'bg-purple-500/10 text-purple-700 border-purple-200';
+  if (s.includes('shein')) return 'bg-pink-500/10 text-pink-700 border-pink-200';
+  return 'bg-gray-500/10 text-gray-700 border-gray-200';
 }
 
 function getSourceDotColor(source: string): string {
-  switch (source) {
-    case 'Amazon':
-      return 'bg-orange-500';
-    case 'eBay':
-      return 'bg-blue-600';
-    case 'MercadoLibre':
-      return 'bg-yellow-500';
-    case 'AliExpress':
-      return 'bg-red-500';
-    case 'Temu':
-      return 'bg-purple-600';
-    case 'SHEIN':
-      return 'bg-pink-500';
-    default:
-      return 'bg-gray-500';
-  }
+  const s = source.toLowerCase();
+  if (s.includes('mercadolibre') || s.includes('ml')) return 'bg-yellow-500';
+  if (s.includes('amazon')) return 'bg-orange-500';
+  if (s.includes('ebay')) return 'bg-blue-600';
+  if (s.includes('aliexpress') || s.includes('ali')) return 'bg-red-500';
+  if (s.includes('temu')) return 'bg-purple-600';
+  if (s.includes('shein')) return 'bg-pink-500';
+  return 'bg-gray-500';
+}
+
+function getSourceLabel(source: string): string {
+  const s = source.toLowerCase();
+  if (s.includes('mercadolibre') || s.includes('ml')) return 'MercadoLibre';
+  if (s.includes('amazon')) return 'Amazon';
+  if (s.includes('ebay')) return 'eBay';
+  if (s.includes('aliexpress') || s.includes('ali')) return 'AliExpress';
+  if (s.includes('temu')) return 'Temu';
+  if (s.includes('shein')) return 'SHEIN';
+  return source;
 }
 
 function getSourceIconChar(source: string): string {
-  switch (source) {
-    case 'Amazon':
-      return 'A';
-    case 'eBay':
-      return 'e';
-    case 'MercadoLibre':
-      return 'M';
-    case 'AliExpress':
-      return '🛒';
-    case 'Temu':
-      return 'T';
-    case 'SHEIN':
-      return 'S';
-    default:
-      return '📦';
-  }
+  const s = source.toLowerCase();
+  if (s.includes('mercadolibre') || s.includes('ml')) return 'M';
+  if (s.includes('amazon')) return 'A';
+  if (s.includes('ebay')) return 'e';
+  if (s.includes('aliexpress') || s.includes('ali')) return 'Ali';
+  if (s.includes('temu')) return 'T';
+  if (s.includes('shein')) return 'S';
+  return '📦';
+}
+
+function getSourceBtnColor(sourceId: string): string {
+  const s = sourceId.toLowerCase();
+  if (s === 'all') return undefined;
+  if (s.includes('mercadolibre') || s.includes('ml')) return '#BFA000';
+  if (s.includes('amazon')) return '#FF9900';
+  if (s.includes('ebay')) return '#0064D2';
+  if (s.includes('aliexpress') || s.includes('ali')) return '#FF4747';
+  if (s.includes('temu')) return '#7C3AED';
+  if (s.includes('shein')) return '#E11B1B';
+  return '#6B7280';
 }
 
 function renderStars(rating: number) {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
     if (i <= Math.floor(rating)) {
-      stars.push(
-        <Star
-          key={i}
-          className="h-3 w-3 fill-yellow-400 text-yellow-400"
-        />
-      );
+      stars.push(<Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />);
     } else if (i - 0.5 <= rating) {
-      stars.push(
-        <Star
-          key={i}
-          className="h-3 w-3 fill-yellow-400/50 text-yellow-400"
-        />
-      );
+      stars.push(<Star key={i} className="h-3 w-3 fill-yellow-400/50 text-yellow-400" />);
     } else {
-      stars.push(
-        <Star
-          key={i}
-          className="h-3 w-3 text-gray-200"
-        />
-      );
+      stars.push(<Star key={i} className="h-3 w-3 text-gray-200" />);
     }
   }
   return stars;
+}
+
+// ====== API Types ======
+interface APIProduct {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  originalPrice?: number;
+  currency: string;
+  imageUrl?: string;
+  sourceUrl: string;
+  affiliateUrl?: string;
+  source: string;
+  externalId?: string;
+  category: string;
+  categoryPath?: string;
+  brand?: string;
+  seller?: string;
+  rating?: number;
+  reviewCount: number;
+  soldQuantity: number;
+  commission: number;
+  active: boolean;
+  featured: boolean;
+  syncedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { clicks: number };
+}
+
+function apiToStoreProduct(p: APIProduct): AffiliateProduct {
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    price: p.price,
+    originalPrice: p.originalPrice,
+    currency: p.currency,
+    imageUrl: p.imageUrl,
+    sourceUrl: p.sourceUrl,
+    source: p.source,
+    category: p.category,
+    brand: p.brand,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
+    commission: p.commission,
+    active: p.active,
+    featured: p.featured,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
 }
 
 // ====== Sub-Components ======
@@ -468,19 +256,16 @@ function renderStars(rating: number) {
 function LoadingSkeleton() {
   return (
     <div className="space-y-4 px-4 pb-6">
-      {/* Source tabs skeleton */}
       <div className="flex gap-2 overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-8 w-20 shrink-0 rounded-full" />
         ))}
       </div>
-      {/* Category pills skeleton */}
       <div className="flex gap-2 overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-7 w-16 shrink-0 rounded-full" />
         ))}
       </div>
-      {/* Product grid skeleton */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="rounded-xl border border-gray-100 bg-white overflow-hidden">
@@ -489,9 +274,6 @@ function LoadingSkeleton() {
               <Skeleton className="h-4 w-full rounded" />
               <Skeleton className="h-4 w-2/3 rounded" />
               <Skeleton className="h-5 w-1/2 rounded" />
-              <div className="flex gap-1">
-                <Skeleton className="h-3 w-12 rounded" />
-              </div>
               <Skeleton className="h-8 w-full rounded-lg" />
             </div>
           </div>
@@ -519,6 +301,29 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   );
 }
 
+function OfflineBanner({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mx-4 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <div className="flex items-start gap-3">
+        <WifiOff className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-amber-800">Modo sin conexión</p>
+          <p className="text-xs text-amber-600 mt-0.5">
+            Mostrando productos de demostración. Para ver productos reales de MercadoLibre, sincronizá desde el Panel de Admin.
+          </p>
+          <button
+            onClick={onRetry}
+            className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-800"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Reintentar conexión
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProductCard({
   product,
   onClick,
@@ -528,44 +333,54 @@ function ProductCard({
 }) {
   const [liked, setLiked] = useState(false);
   const discount = getDiscountPercent(product.price, product.originalPrice);
-  const sourceConfig = getSourceConfig(product.source);
+  const sourceLabel = getSourceLabel(product.source);
+  const sourceColor = getSourceBtnColor(product.source);
+  const hasImage = product.imageUrl && !product.imageUrl.includes('http2.mlstatic.com/D_NQ_NP');
 
   return (
     <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col">
-      {/* Image placeholder */}
+      {/* Image */}
       <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
-        {/* Store icon placeholder */}
-        <div className="flex flex-col items-center gap-2">
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`flex flex-col items-center gap-2 ${product.imageUrl ? 'hidden' : ''}`}>
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm"
-            style={{ backgroundColor: sourceConfig.color === '#FFE600' ? '#D4A800' : sourceConfig.color }}
+            style={{ backgroundColor: sourceColor || '#6B7280' }}
           >
             {getSourceIconChar(product.source)}
           </div>
-          <span className="text-[10px] text-gray-400 font-medium">{product.brand || product.source}</span>
+          <span className="text-[10px] text-gray-400 font-medium">{product.brand || sourceLabel}</span>
         </div>
 
-        {/* Discount badge */}
         {discount && (
           <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
             -{discount}%
           </div>
         )}
 
-        {/* Like button */}
+        {product.featured && (
+          <div className="absolute top-2 right-2 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+            ★ TOP
+          </div>
+        )}
+
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setLiked(!liked);
-          }}
-          className="absolute top-2 right-2 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+          onClick={(e) => { e.stopPropagation(); setLiked(!liked); }}
+          className="absolute bottom-2 right-2 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-sm"
           aria-label={liked ? 'Quitar de favoritos' : 'Agregar a favoritos'}
         >
-          <Heart
-            className={`h-3.5 w-3.5 transition-colors ${
-              liked ? 'fill-red-500 text-red-500' : 'text-gray-400'
-            }`}
-          />
+          <Heart className={`h-3.5 w-3.5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
         </button>
       </div>
 
@@ -573,12 +388,15 @@ function ProductCard({
       <div className="p-3 flex flex-col flex-1">
         {/* Source badge */}
         <div className="flex items-center gap-1 mb-1.5">
-          <span
-            className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border ${getSourceBadgeStyles(product.source)}`}
-          >
+          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border ${getSourceBadgeStyles(product.source)}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${getSourceDotColor(product.source)}`} />
-            {product.source}
+            {sourceLabel}
           </span>
+          {product.soldQuantity > 0 && (
+            <span className="text-[9px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">
+              +{product.soldQuantity} vendidos
+            </span>
+          )}
         </div>
 
         {/* Title */}
@@ -587,35 +405,24 @@ function ProductCard({
         </h3>
 
         {/* Rating */}
-        {product.rating && (
+        {product.rating && product.rating > 0 && (
           <div className="flex items-center gap-1 mb-2">
-            <div className="flex items-center gap-px">
-              {renderStars(product.rating)}
-            </div>
+            <div className="flex items-center gap-px">{renderStars(product.rating)}</div>
+            <span className="text-[10px] text-muted-foreground">{product.rating.toFixed(1)}</span>
             <span className="text-[10px] text-muted-foreground">
-              {product.rating}
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              ({product.reviewCount > 999
-                ? `${(product.reviewCount / 1000).toFixed(1)}k`
-                : product.reviewCount})
+              ({product.reviewCount > 999 ? `${(product.reviewCount / 1000).toFixed(1)}k` : product.reviewCount})
             </span>
           </div>
         )}
 
-        {/* Spacer */}
         <div className="flex-1" />
 
         {/* Price */}
         <div className="mt-auto">
           {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-[11px] text-muted-foreground line-through block">
-              {formatPrice(product.originalPrice)}
-            </span>
+            <span className="text-[11px] text-muted-foreground line-through block">{formatPrice(product.originalPrice)}</span>
           )}
-          <p className="text-base font-bold text-foreground">
-            {formatPrice(product.price)}
-          </p>
+          <p className="text-base font-bold text-foreground">{formatPrice(product.price)}</p>
         </div>
 
         {/* CTA Button */}
@@ -644,23 +451,47 @@ export function ProductsScreen() {
     setProductSearchQuery,
   } = useAppStore();
 
+  const [allProducts, setAllProducts] = useState<AffiliateProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set());
-  const [showFilters, setShowFilters] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const showFiltersRef = useRef(false);
+  const [, setShowFiltersState] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const sourcesScrollRef = useRef<HTMLDivElement>(null);
 
-  // Simulate initial loading
-  useMemo(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+  // Fetch real products from API
+  const fetchProducts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: '100' });
+      const res = await fetch(`/api/products/real?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        const products: AffiliateProduct[] = (data.products || []).map(apiToStoreProduct);
+        setAllProducts(products);
+        setTotalProducts(data.total || products.length);
+        setIsOnline(true);
+      } else {
+        throw new Error('API error');
+      }
+    } catch {
+      // Fallback to demo products
+      setAllProducts(FALLBACK_PRODUCTS);
+      setTotalProducts(FALLBACK_PRODUCTS.length);
+      setIsOnline(false);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Filter products
-  const filteredProducts = useMemo(() => {
-    let products = DEMO_PRODUCTS;
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
-    // Filter by search query
+  // Filter products (client-side)
+  const filteredProducts = useMemo(() => {
+    let products = allProducts;
+
     if (productSearchQuery.trim()) {
       const query = productSearchQuery.toLowerCase().trim();
       products = products.filter(
@@ -671,55 +502,23 @@ export function ProductsScreen() {
       );
     }
 
-    // Filter by source
     if (selectedProductSource !== 'all') {
-      products = products.filter((p) => p.source === selectedProductSource);
+      products = products.filter((p) => p.source.toLowerCase() === selectedProductSource.toLowerCase());
     }
 
-    // Filter by category
     if (selectedProductCategory !== 'all') {
       products = products.filter((p) => p.category === selectedProductCategory);
     }
 
     return products;
-  }, [productSearchQuery, selectedProductSource, selectedProductCategory]);
+  }, [allProducts, productSearchQuery, selectedProductSource, selectedProductCategory]);
 
-  const hasActiveFilters =
-    selectedProductSource !== 'all' || selectedProductCategory !== 'all' || productSearchQuery.trim() !== '';
+  const hasActiveFilters = selectedProductSource !== 'all' || selectedProductCategory !== 'all' || productSearchQuery.trim() !== '';
 
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setProductSearchQuery(value);
-    },
-    [setProductSearchQuery]
-  );
-
-  const handleClearSearch = useCallback(() => {
-    setProductSearchQuery('');
-    searchInputRef.current?.focus();
-  }, [setProductSearchQuery]);
-
-  const handleSourceChange = useCallback(
-    (sourceId: string) => {
-      setSelectedProductSource(sourceId);
-    },
-    [setSelectedProductSource]
-  );
-
-  const handleCategoryChange = useCallback(
-    (catId: string) => {
-      setSelectedProductCategory(catId);
-    },
-    [setSelectedProductCategory]
-  );
-
-  const handleProductClick = useCallback(
-    (product: AffiliateProduct) => {
-      setSelectedProduct(product);
-      setView('product-detail');
-    },
-    [setSelectedProduct, setView]
-  );
+  const handleProductClick = useCallback((product: AffiliateProduct) => {
+    setSelectedProduct(product);
+    setView('product-detail');
+  }, [setSelectedProduct, setView]);
 
   const handleClearAllFilters = useCallback(() => {
     setProductSearchQuery('');
@@ -727,10 +526,14 @@ export function ProductsScreen() {
     setSelectedProductCategory('all');
   }, [setProductSearchQuery, setSelectedProductSource, setSelectedProductCategory]);
 
+  const toggleFilters = useCallback(() => {
+    showFiltersRef.current = !showFiltersRef.current;
+    setShowFiltersState(showFiltersRef.current);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-full bg-gray-50/50">
-        {/* Sticky header skeleton */}
         <div className="sticky top-0 z-20 bg-white border-b border-gray-100 px-4 pt-10 pb-3 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <Skeleton className="h-8 w-8 rounded-lg" />
@@ -745,9 +548,8 @@ export function ProductsScreen() {
 
   return (
     <div className="min-h-full bg-gray-50/50">
-      {/* ====== Sticky Header with Search ====== */}
+      {/* ====== Sticky Header ====== */}
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        {/* Top bar */}
         <div className="px-4 pt-10 pb-2">
           <div className="flex items-center gap-3 mb-3">
             <button
@@ -757,20 +559,26 @@ export function ProductsScreen() {
             >
               <ArrowLeft className="h-4 w-4 text-gray-600" />
             </button>
-            <h1 className="text-lg font-bold text-foreground flex-1">
-              Productos
-            </h1>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                showFilters
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              aria-label="Filtros"
-            >
-              <Filter className="h-4 w-4" />
-            </button>
+            <h1 className="text-lg font-bold text-foreground flex-1">Productos</h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setView('admin')}
+                className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                aria-label="Admin"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+              <button
+                onClick={toggleFilters}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showFiltersRef.current ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                aria-label="Filtros"
+              >
+                <Filter className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Search bar */}
@@ -780,13 +588,13 @@ export function ProductsScreen() {
               ref={searchInputRef}
               type="text"
               value={productSearchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(e) => setProductSearchQuery(e.target.value)}
               placeholder="Buscar productos, marcas..."
               className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-gray-100 border-none text-sm text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:bg-white transition-all"
             />
             {productSearchQuery && (
               <button
-                onClick={handleClearSearch}
+                onClick={() => { setProductSearchQuery(''); searchInputRef.current?.focus(); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center transition-colors"
                 aria-label="Limpiar búsqueda"
               >
@@ -796,32 +604,20 @@ export function ProductsScreen() {
           </div>
         </div>
 
-        {/* Source filter tabs */}
+        {/* Source tabs */}
         <div className="border-b border-gray-100">
-          <div
-            ref={sourcesScrollRef}
-            className="flex gap-1.5 overflow-x-auto px-4 py-2.5 scrollbar-hide"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
+          <div className="flex gap-1.5 overflow-x-auto px-4 py-2.5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {SOURCES.map((source) => (
               <button
                 key={source.id}
-                onClick={() => handleSourceChange(source.id)}
+                onClick={() => setSelectedProductSource(source.id)}
                 className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  selectedProductSource === source.id
-                    ? 'text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  selectedProductSource === source.id ? 'text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
-                style={
-                  selectedProductSource === source.id
-                    ? { backgroundColor: source.color === '#FFE600' ? '#D4A800' : source.color }
-                    : undefined
-                }
+                style={selectedProductSource === source.id ? { backgroundColor: getSourceBtnColor(source.id) || '#6B7280' } : undefined}
               >
                 {source.id !== 'all' && (
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${getSourceDotColor(source.id)}`}
-                  />
+                  <span className={`w-1.5 h-1.5 rounded-full ${getSourceDotColor(source.id)}`} />
                 )}
                 {source.name}
               </button>
@@ -829,18 +625,16 @@ export function ProductsScreen() {
           </div>
         </div>
 
-        {/* Category filter pills */}
-        {showFilters && (
+        {/* Category pills */}
+        {showFiltersRef.current && (
           <div className="px-4 py-2.5 border-b border-gray-100">
             <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => handleCategoryChange(cat.id)}
+                  onClick={() => setSelectedProductCategory(cat.id)}
                   className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    selectedProductCategory === cat.id
-                      ? 'bg-foreground text-background shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    selectedProductCategory === cat.id ? 'bg-foreground text-background shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {cat.name}
@@ -851,33 +645,29 @@ export function ProductsScreen() {
         )}
       </div>
 
-      {/* ====== Results info bar ====== */}
+      {/* Offline banner */}
+      {!isOnline && <OfflineBanner onRetry={fetchProducts} />}
+
+      {/* Results info */}
       {hasActiveFilters && (
         <div className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-50">
           <p className="text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">{filteredProducts.length}</span>{' '}
             {filteredProducts.length === 1 ? 'resultado' : 'resultados'}
+            {isOnline && <span className="ml-1">de {totalProducts}</span>}
           </p>
-          <button
-            onClick={handleClearAllFilters}
-            className="flex items-center gap-1 text-xs text-orange-500 font-semibold hover:text-orange-600 transition-colors"
-          >
-            Limpiar filtros
-            <ChevronRight className="h-3 w-3" />
+          <button onClick={handleClearAllFilters} className="flex items-center gap-1 text-xs text-orange-500 font-semibold hover:text-orange-600 transition-colors">
+            Limpiar filtros <ChevronRight className="h-3 w-3" />
           </button>
         </div>
       )}
 
-      {/* ====== Product Grid ====== */}
+      {/* Product Grid */}
       {filteredProducts.length > 0 ? (
         <div className="px-3 py-4 pb-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onClick={handleProductClick}
-              />
+              <ProductCard key={product.id} product={product} onClick={handleProductClick} />
             ))}
           </div>
         </div>
